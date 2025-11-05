@@ -1,12 +1,15 @@
 "use client";
 
-import { ChevronDown, Plus, Search, Inbox, ListChecks, LayoutGrid, Map, Users, Github, Zap, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Plus, Search, Inbox, ListChecks, LayoutGrid, Map, Users, Github, Zap, MoreHorizontal, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SmartMoneyPanel } from "@/components/smart-money-panel";
 
 export function Sidebar() {
+  const router = useRouter();
+
   return (
     <div className="w-60 border-r border-[#20222f] bg-[#1c1e2b] flex flex-col h-screen">
       <div className="p-3 border-b border-[#20222f]">
@@ -41,6 +44,15 @@ export function Sidebar() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 h-8 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
+            onClick={() => router.push("/dex-trades")}
+          >
+            <TrendingUp className="w-4 h-4" />
+            DEX Trades
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 h-8 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
+            onClick={() => router.push("/")}
           >
             <Inbox className="w-4 h-4" />
             Inbox
