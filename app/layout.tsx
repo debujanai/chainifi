@@ -1,6 +1,9 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { ResponsiveNavProvider } from '@/components/responsive-nav-context';
+import { Topbar } from '@/components/topbar';
+import { MobileOverlay } from '@/components/mobile-overlay';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -10,6 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Project Solar Sailer - Linear',
   description: 'Project management interface',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };
 
 export default function RootLayout({
@@ -19,7 +23,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased`}>{children}</body>
+      <body className={`${inter.className} antialiased`}>
+        <ResponsiveNavProvider>
+          <Topbar />
+          <MobileOverlay />
+          <div className="md:pt-0 pt-14">{children}</div>
+        </ResponsiveNavProvider>
+      </body>
     </html>
   );
 }

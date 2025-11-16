@@ -4,10 +4,22 @@ import { Plus, ChevronRight, Calendar, Users, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useResponsiveNav } from "./responsive-nav-context";
 
 export function PropertiesPanel() {
+  const { rightOpen } = useResponsiveNav();
   return (
-    <div className="w-80 border-l border-[#20222f] bg-[#141723] flex flex-col h-screen">
+    <aside
+      id="app-properties-panel"
+      aria-label="Properties panel"
+      className={`
+        md:static md:translate-x-0 md:w-80 md:h-screen md:flex md:flex-col
+        fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 flex flex-col
+        border-l border-[#20222f] bg-[#141723]
+        transform transition-transform duration-300 ease-in-out z-40
+        ${rightOpen ? "translate-x-0" : "translate-x-full"}
+      `}
+    >
       <div className="p-4 border-b border-[#20222f]">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-xs">
@@ -20,7 +32,7 @@ export function PropertiesPanel() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" aria-label="Properties content">
         <div className="p-4">
           <div className="mb-6">
             <div className="text-xs font-normal text-gray-400 mb-3">Properties</div>
@@ -179,6 +191,6 @@ export function PropertiesPanel() {
           </div>
         </div>
       </ScrollArea>
-    </div>
+    </aside>
   );
 }
