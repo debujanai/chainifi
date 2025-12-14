@@ -4,9 +4,11 @@ import { PortfolioDefiHoldingsBoard } from "@/components/portfolio-defi-holdings
 
 export default function PortfolioDefiHoldingsPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <PortfolioDefiHoldingsBoard />
+      <div className="flex-1 min-w-0">
+        <PortfolioDefiHoldingsBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Loader, TrendingUp, TrendingDown, User, Building2, Calendar } from "lucide-react";
+import { MoreHorizontal, Loader, TrendingUp, TrendingDown, User, Building2, Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -67,10 +67,10 @@ export function PnlBoard() {
       setSummary(summaryResp);
 
       // Load detailed PnL
-      const sortField = 
+      const sortField =
         sortBy === "realized" ? "pnl_usd_realised" :
-        sortBy === "unrealized" ? "pnl_usd_unrealised" :
-        "roi_percent_realised";
+          sortBy === "unrealized" ? "pnl_usd_unrealised" :
+            "roi_percent_realised";
 
       const resp: AddressPnlResponse = await fetchAddressPnl({
         address: useEntity ? undefined : address.trim() || undefined,
@@ -101,133 +101,130 @@ export function PnlBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
-              <span className="text-white font-normal">Address PnL & Trade Performance</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5">
-                <MoreHorizontal className="w-3 h-3 text-gray-400" />
-              </Button>
-            </div>
-          </div>
-
+        {/* Title Row */}
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`h-8 text-xs font-normal ${filterOpen ? "bg-[#272936] text-white" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-              onClick={() => setFilterOpen((v) => !v)}
-            >
-              Filters
+            <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
+            <span className="text-white font-normal text-sm">Address PnL & Trade Performance</span>
+            <Button variant="ghost" size="icon" className="h-5 w-5">
+              <MoreHorizontal className="w-3 h-3 text-gray-400" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                  Sort: {sortBy === "realized" ? "Realized" : sortBy === "unrealized" ? "Unrealized" : "ROI"} {sortDirection === "DESC" ? "↓" : "↑"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[12rem]">
-                <DropdownMenuItem onClick={() => setSortBy("realized")}>Sort by Realized PnL</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("unrealized")}>Sort by Unrealized PnL</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("roi")}>Sort by ROI</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
-                  Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
-        {/* Address/Entity Input */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex gap-2">
-            <Button
-              variant={useEntity ? "outline" : "secondary"}
-              size="sm"
-              className={`h-8 text-xs ${useEntity ? "border-[#20222f] text-gray-400 hover:bg-[#20222f]" : "bg-blue-500/20 border-blue-500/50 text-blue-300"}`}
-              onClick={() => setUseEntity(false)}
-            >
-              <User className="w-3 h-3 mr-1" /> Address
-            </Button>
-            <Button
-              variant={useEntity ? "secondary" : "outline"}
-              size="sm"
-              className={`h-8 text-xs ${useEntity ? "bg-purple-500/20 border-purple-500/50 text-purple-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
-              onClick={() => setUseEntity(true)}
-            >
-              <Building2 className="w-3 h-3 mr-1" /> Entity
-            </Button>
-          </div>
-          {!useEntity ? (
-            <Input
-              type="text"
-              placeholder="Enter address (0x...)"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && load()}
-              className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
-            />
-          ) : (
-            <Input
-              type="text"
-              placeholder="Enter entity name"
-              value={entityName}
-              onChange={(e) => setEntityName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && load()}
-              className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
-            />
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal min-w-[100px]">
-                {chain.charAt(0).toUpperCase() + chain.slice(1)}
+        {/* Controls Container */}
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Search & Primary Actions */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Input
+                type="text"
+                placeholder={useEntity ? "Coinbase" : "0x..."}
+                value={useEntity ? entityName : address}
+                onChange={(e) => useEntity ? setEntityName(e.target.value) : setAddress(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && load()}
+                className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+                onClick={load}
+                disabled={loading}
+              >
+                {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
-              {availableChains.map((c) => (
-                <DropdownMenuItem key={c} onClick={() => { setChain(c); setPage(1); }}>
-                  {c.charAt(0).toUpperCase() + c.slice(1)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-normal"
-            onClick={load}
-            disabled={loading}
-          >
-            {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Load"}
-          </Button>
+            </div>
+
+            {/* Secondary Row: Toggles & Filter Trigger */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
+                <Filter className="w-3 h-3 mr-2" />
+                Filters
+              </Button>
+
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${!useEntity ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setUseEntity(false)}
+                >
+                  Address
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${useEntity ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setUseEntity(true)}
+                >
+                  Entity
+                </Button>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
+                    {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  {availableChains.map((c) => (
+                    <DropdownMenuItem key={c} onClick={() => { setChain(c); setPage(1); }}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
+                    Sort: {sortBy === "realized" ? "Realized" : sortBy === "unrealized" ? "Unrealized" : "ROI"} {sortDirection === "DESC" ? "↓" : "↑"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[12rem]">
+                  <DropdownMenuItem onClick={() => setSortBy("realized")}>Sort by Realized PnL</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("unrealized")}>Sort by Unrealized PnL</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("roi")}>Sort by ROI</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
+                    Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
       </div>
 
       {filterOpen && (
         <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Date Range */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Date Range</label>
+            <div className="flex flex-col gap-2">
               <div className="flex gap-2">
                 <Input
                   value={from}
                   onChange={(e) => setFrom(e.target.value)}
                   placeholder="From (YYYY-MM-DD)"
-                  className="h-8 bg-[#171a26] border-[#20222f] text-sm text-gray-200 placeholder:text-gray-500"
+                  className="h-8 bg-[#171a26] border-[#20222f] text-xs text-gray-200 placeholder:text-gray-400"
                 />
                 <Input
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
                   placeholder="To (YYYY-MM-DD)"
-                  className="h-8 bg-[#171a26] border-[#20222f] text-sm text-gray-200 placeholder:text-gray-500"
+                  className="h-8 bg-[#171a26] border-[#20222f] text-xs text-gray-200 placeholder:text-gray-400"
                 />
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
+                className="h-8 text-xs bg-[#171a26] border border-[#20222f] hover:bg-[#1c1e2b] text-gray-300 font-normal"
                 onClick={() => { setPage(1); load(); }}
               >
                 <Calendar className="w-3 h-3 mr-1" /> Apply Range
@@ -235,8 +232,7 @@ export function PnlBoard() {
             </div>
 
             {/* Options */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Options</label>
+            <div className="flex flex-col gap-2">
               <Button
                 variant={showRealized ? "secondary" : "outline"}
                 size="sm"
@@ -251,23 +247,23 @@ export function PnlBoard() {
       )}
 
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="py-4 pr-4 pl-0">
           {loading && (
-            <div className="flex items-center justify-center py-6">
+            <div className="flex items-center justify-center py-6 ml-4">
               <Loader className="w-4 h-4 text-blue-400 animate-spin" />
             </div>
           )}
 
           {error && (
-            <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3">
+            <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3 ml-4">
               <span className="text-[10px] text-red-300 font-normal">{error}</span>
             </div>
           )}
 
           {/* Summary Stats */}
           {summary && (
-            <div className="mb-6 p-4 bg-[#171a26] border border-[#20222f] rounded">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+            <div className="ml-4 mb-6 p-4 bg-[#171a26] border border-[#20222f] rounded sticky left-4 md:static max-w-[calc(100vw-2rem)] md:max-w-none z-20">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Realized PnL</div>
                   <div className={`text-lg font-semibold ${summary.realized_pnl_usd >= 0 ? "text-green-400" : "text-red-400"}`}>
@@ -279,19 +275,19 @@ export function PnlBoard() {
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Win Rate</div>
-                  <div className="text-lg font-semibold text-blue-300">{summary.win_rate.toFixed(1)}%</div>
+                  <div className="text-lg font-semibold text-blue-400">{summary.win_rate.toFixed(1)}%</div>
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Traded Tokens</div>
-                  <div className="text-lg font-semibold text-gray-300">{summary.traded_token_count}</div>
+                  <div className="text-lg font-semibold text-yellow-400">{summary.traded_token_count}</div>
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Traded Times</div>
-                  <div className="text-lg font-semibold text-gray-300">{summary.traded_times}</div>
+                  <div className="text-lg font-semibold text-purple-400">{summary.traded_times}</div>
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Top 5 Tokens</div>
-                  <div className="text-lg font-semibold text-gray-300">{summary.top5_tokens.length}</div>
+                  <div className="text-lg font-semibold text-orange-400">{summary.top5_tokens.length}</div>
                 </div>
               </div>
 
@@ -304,11 +300,10 @@ export function PnlBoard() {
                       <Badge
                         key={idx}
                         variant="secondary"
-                        className={`text-[10px] h-6 px-3 rounded-full ${
-                          token.realized_pnl >= 0
-                            ? "bg-green-500/20 text-green-300 border-green-500/50"
-                            : "bg-red-500/20 text-red-300 border-red-500/50"
-                        }`}
+                        className={`text-[10px] h-6 px-3 rounded-full ${token.realized_pnl >= 0
+                          ? "bg-green-500/20 text-green-300 border-green-500/50"
+                          : "bg-red-500/20 text-red-300 border-red-500/50"
+                          }`}
                       >
                         {token.token_symbol}: {formatUSD(token.realized_pnl)} ({formatPercent(token.realized_roi)})
                       </Badge>
@@ -321,107 +316,116 @@ export function PnlBoard() {
 
           {/* Detailed PnL Table */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500 w-full">
-              <div className="h-6 w-6 flex-shrink-0" />
-              <div className="w-[120px] flex-shrink-0">Symbol</div>
-              <div className="w-[100px] flex-shrink-0">Price</div>
-              <div className="flex items-center gap-4 flex-1 justify-end">
-                <div className="w-[100px] text-right">Realized PnL</div>
-                <div className="w-[100px] text-right">Unrealized PnL</div>
-                <div className="w-[80px] text-right">ROI %</div>
+            {/* Header */}
+            <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
+              {/* Sticky Header Column */}
+              <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                <div className="bg-[#141723] flex items-center gap-2 min-w-[80px] ml-0 pl-3 py-2.5 rounded-l border-y border-l border-transparent">
+                  <div className="h-6 w-6" />
+                  <div className="font-mono min-w-[60px]">Symbol</div>
+                </div>
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="w-[90px] text-right">Bought</div>
-                <div className="w-[90px] text-right">Sold</div>
-                <div className="w-[90px] text-right">Holding</div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <div className="w-[50px] text-right">Buys</div>
-                <div className="w-[50px] text-right">Sells</div>
+
+              {/* Main Header Content */}
+              <div className="flex-1 flex items-center min-w-0 pr-3 pl-4 py-2.5 border-y border-r border-transparent">
+                <div className="min-w-[120px] text-gray-500">Address</div>
+                <div className="flex items-center gap-4 ml-auto">
+                  <div className="min-w-[100px] text-right">Realized PnL</div>
+                  <div className="min-w-[100px] text-right">Unrealized PnL</div>
+                  <div className="min-w-[80px] text-right">ROI %</div>
+                  <div className="min-w-[90px] text-right">Bought</div>
+                  <div className="min-w-[90px] text-right">Sold</div>
+                  <div className="min-w-[90px] text-right">Holding</div>
+                  <div className="min-w-[50px] text-right">Buys</div>
+                  <div className="min-w-[50px] text-right">Sells</div>
+                </div>
               </div>
             </div>
 
+            {/* Rows */}
             <div className="space-y-1">
               {rows.map((r, idx) => {
                 const totalPnl = r.pnl_usd_realised + r.pnl_usd_unrealised;
                 const isPositive = totalPnl >= 0;
-                
+
                 return (
                   <div
                     key={`${r.token_address}-${idx}`}
-                    className="flex items-center gap-2 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group w-full"
+                    className="flex items-stretch group whitespace-nowrap"
                   >
-                    {/* Three dots menu */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                    >
-                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                    </Button>
-
-                    {/* Symbol */}
-                    <div className="w-[120px] flex-shrink-0">
-                      <div className="text-sm text-white font-medium">{r.token_symbol}</div>
-                      <div className="text-xs text-gray-400 font-mono truncate">{r.token_address.slice(0, 8)}...</div>
-                    </div>
-
-                    {/* Price */}
-                    <div className="w-[100px] flex-shrink-0 text-xs text-gray-300">
-                      ${r.token_price.toFixed(2)}
-                    </div>
-
-                    {/* PnL Values */}
-                    <div className="flex items-center gap-4 flex-1 justify-end">
-                      <div className="w-[100px] text-right">
-                        <div className="text-[10px] text-gray-500">Realized</div>
-                        <div className={`text-xs font-semibold ${r.pnl_usd_realised >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {formatUSD(r.pnl_usd_realised)}
-                        </div>
-                        <div className={`text-[10px] ${r.roi_percent_realised >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {formatPercent(r.roi_percent_realised)}
-                        </div>
-                      </div>
-                      <div className="w-[100px] text-right">
-                        <div className="text-[10px] text-gray-500">Unrealized</div>
-                        <div className={`text-xs font-semibold ${r.pnl_usd_unrealised >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {formatUSD(r.pnl_usd_unrealised)}
-                        </div>
-                        <div className={`text-[10px] ${r.roi_percent_unrealised >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {formatPercent(r.roi_percent_unrealised)}
-                        </div>
-                      </div>
-                      <div className="w-[80px] text-right">
-                        <div className="text-[10px] text-gray-500">Total ROI</div>
-                        <div className={`text-xs font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                          {formatPercent(r.roi_percent_realised + r.roi_percent_unrealised)}
+                    {/* Sticky Column */}
+                    <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                      <div className="bg-[#171a26] group-hover:bg-blue-900/10 border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[80px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-blue-400" />
+                        </Button>
+                        <div className="font-mono text-xs text-blue-300 font-medium min-w-[60px]">
+                          {r.token_symbol}
                         </div>
                       </div>
                     </div>
 
-                    {/* Trading Stats */}
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <div className="w-[90px] text-right text-xs text-gray-300">
-                        <div className="text-[10px] text-gray-500">Bought</div>
-                        <div>{formatUSD(r.bought_usd)}</div>
+                    {/* Main Content */}
+                    <div className="flex-1 flex items-center min-w-0 pr-3 pl-4 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-blue-900/10 group-hover:border-[#272936] transition-colors duration-150">
+                      <div className="min-w-[120px] text-xs text-gray-500 font-mono truncate">
+                        {r.token_address.slice(0, 8)}...{r.token_address.slice(-6)}
                       </div>
-                      <div className="w-[90px] text-right text-xs text-gray-300">
-                        <div className="text-[10px] text-gray-500">Sold</div>
-                        <div>{formatUSD(r.sold_usd)}</div>
-                      </div>
-                      <div className="w-[90px] text-right text-xs text-gray-300">
-                        <div className="text-[10px] text-gray-500">Holding</div>
-                        <div>{formatUSD(r.holding_usd)}</div>
-                      </div>
-                    </div>
+                      <div className="flex items-center gap-4 ml-auto">
+                        {/* Realized PnL */}
+                        <div className="min-w-[100px] text-right">
+                          <div className={`text-xs font-medium font-mono tabular-nums ${r.pnl_usd_realised >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {formatUSD(r.pnl_usd_realised)}
+                          </div>
+                          <div className={`text-[10px] font-mono tabular-nums ${r.roi_percent_realised >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {formatPercent(r.roi_percent_realised)}
+                          </div>
+                        </div>
 
-                    {/* Trade Counts */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="w-[50px] text-right text-xs text-gray-400">
-                        {r.nof_buys}
-                      </div>
-                      <div className="w-[50px] text-right text-xs text-gray-400">
-                        {r.nof_sells}
+                        {/* Unrealized PnL */}
+                        <div className="min-w-[100px] text-right">
+                          <div className={`text-xs font-medium font-mono tabular-nums ${r.pnl_usd_unrealised >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {formatUSD(r.pnl_usd_unrealised)}
+                          </div>
+                          <div className={`text-[10px] font-mono tabular-nums ${r.roi_percent_unrealised >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {formatPercent(r.roi_percent_unrealised)}
+                          </div>
+                        </div>
+
+                        {/* ROI % */}
+                        <div className="min-w-[80px] text-right">
+                          <div className={`text-xs font-medium font-mono tabular-nums ${isPositive ? "text-green-400" : "text-red-400"}`}>
+                            {formatPercent(r.roi_percent_realised + r.roi_percent_unrealised)}
+                          </div>
+                        </div>
+
+                        {/* Bought */}
+                        <div className="min-w-[90px] text-right text-xs font-mono tabular-nums text-yellow-300/80">
+                          {formatUSD(r.bought_usd)}
+                        </div>
+
+                        {/* Sold */}
+                        <div className="min-w-[90px] text-right text-xs font-mono tabular-nums text-red-300/80">
+                          {formatUSD(r.sold_usd)}
+                        </div>
+
+                        {/* Holding */}
+                        <div className="min-w-[90px] text-right text-xs font-mono tabular-nums text-blue-300/80">
+                          {formatUSD(r.holding_usd)}
+                        </div>
+
+                        {/* Buys */}
+                        <div className="min-w-[50px] text-right text-xs text-green-400 font-medium">
+                          {r.nof_buys}
+                        </div>
+
+                        {/* Sells */}
+                        <div className="min-w-[50px] text-right text-xs text-red-400 font-medium">
+                          {r.nof_sells}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -429,48 +433,51 @@ export function PnlBoard() {
               })}
             </div>
           </div>
-
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-xs text-gray-400">
-              Page {page} {isLastPage ? "(last page)" : ""}
-            </div>
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                    Per page: {perPage}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {[10, 20, 50].map((n) => (
-                    <DropdownMenuItem key={n} onClick={() => { setPerPage(n); setPage(1); }}>
-                      {n}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Prev
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
-                disabled={isLastPage}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </div>
       </ScrollArea>
+
+      {/* Fixed Footer */}
+      <div className="border-t border-[#20222f] p-4 bg-[#141723]">
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-gray-400">
+            Page {page} {isLastPage ? "(last page)" : ""}
+          </div>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#171a26] border border-[#20222f] hover:bg-[#1c1e2b] text-gray-300 font-normal">
+                  Per page: {perPage}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {[10, 20, 50].map((n) => (
+                  <DropdownMenuItem key={n} onClick={() => { setPerPage(n); setPage(1); }}>
+                    {n}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs bg-[#171a26] border border-[#20222f] hover:bg-[#1c1e2b] text-gray-300 font-normal"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Prev
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs bg-[#171a26] border border-[#20222f] hover:bg-[#1c1e2b] text-gray-300 font-normal"
+              disabled={isLastPage}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

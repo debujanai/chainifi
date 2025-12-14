@@ -138,7 +138,7 @@ export function TGMPerpPnlLeaderboardBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
@@ -149,7 +149,7 @@ export function TGMPerpPnlLeaderboardBoard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:flex-nowrap">
             <Button
               variant="ghost"
               size="sm"
@@ -186,14 +186,14 @@ export function TGMPerpPnlLeaderboardBoard() {
         </div>
 
         {/* Token Symbol Input */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2 w-full">
           <Input
             type="text"
             placeholder="Enter token symbol (BTC, ETH, etc.)"
             value={tokenSymbol}
             onChange={(e) => setTokenSymbol(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && load()}
-            className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
+            className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500 w-full"
           />
           <Button
             variant="ghost"
@@ -336,7 +336,8 @@ export function TGMPerpPnlLeaderboardBoard() {
       )}
 
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="p-4 overflow-x-auto">
+          <div className="min-w-full">
           {loading && (
             <div className="flex items-center justify-center py-6">
               <Loader className="w-4 h-4 text-blue-400 animate-spin" />
@@ -371,7 +372,7 @@ export function TGMPerpPnlLeaderboardBoard() {
 
               <div className="space-y-1">
                 {/* Header row to explain columns */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
+                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500 md:whitespace-nowrap">
                   <div className="h-6 w-6" />
                   <div className="min-w-[60px]">Rank</div>
                   <div className="min-w-[200px]">Address</div>
@@ -394,7 +395,7 @@ export function TGMPerpPnlLeaderboardBoard() {
                   return (
                     <div
                       key={`${item.trader_address}-${idx}`}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                      className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group md:whitespace-nowrap"
                     >
                       {/* Three dots menu */}
                       <Button
@@ -448,7 +449,7 @@ export function TGMPerpPnlLeaderboardBoard() {
                       </div>
 
                       {/* Additional Info */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
                         <div className="min-w-[100px] text-right">
                           <div className={`text-xs font-semibold ${item.roi_percent_total >= 0 ? "text-green-400" : "text-red-400"}`}>
                             {formatPercent(item.roi_percent_total)}
@@ -505,6 +506,7 @@ export function TGMPerpPnlLeaderboardBoard() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </ScrollArea>
     </div>

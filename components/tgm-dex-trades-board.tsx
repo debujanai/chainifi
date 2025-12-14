@@ -490,19 +490,23 @@ export function TGMDexTradesBoard() {
 
               <div className="space-y-1">
                 {/* Header row to explain columns */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="min-w-[140px]">Timestamp</div>
-                  <div className="min-w-[200px]">Trader</div>
-                  <div className="min-w-[100px]">Action</div>
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="min-w-[100px]">Token</div>
-                    <div className="min-w-[100px]">Traded Token</div>
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[380px] ml-0 pl-3 py-2 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="min-w-[140px]">Timestamp</div>
+                    <div className="min-w-[200px]">Trader</div>
                   </div>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="min-w-[80px] text-right">Amount</div>
-                    <div className="min-w-[80px] text-right">Traded Amount</div>
-                    <div className="min-w-[80px] text-right">Value USD</div>
+                  <div className="flex items-center gap-4 ml-auto min-w-0">
+                    <div className="min-w-[100px]">Action</div>
+                    <div className="flex items-center gap-4">
+                      <div className="min-w-[100px]">Token</div>
+                      <div className="min-w-[100px]">Traded Token</div>
+                    </div>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="min-w-[80px] text-right">Amount</div>
+                      <div className="min-w-[80px] text-right">Traded Amount</div>
+                      <div className="min-w-[80px] text-right">Value USD</div>
+                    </div>
                   </div>
                 </div>
                 {section.items.map((trade, idx) => {
@@ -511,8 +515,38 @@ export function TGMDexTradesBoard() {
                   return (
                     <div
                       key={`${trade.transaction_hash}-${idx}`}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                      className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
                     >
+                      <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[380px] pr-3 ml-0 pl-3 py-2.5 rounded-l">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <div className="text-xs text-gray-300 font-medium min-w-[140px]">
+                          {new Date(trade.block_timestamp).toLocaleString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                        <div className="min-w-[200px]">
+                          <div className="flex items-center gap-2">
+                            <div className="font-mono text-xs text-gray-400">
+                              {trade.trader_address.slice(0, 6)}...{trade.trader_address.slice(-4)}
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-4 bg-gray-700/50 text-gray-300 border-0 px-1.5 rounded-full"
+                            >
+                              {trade.trader_address_label || "Unknown"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
                       {/* Three dots menu */}
                       <Button
                         variant="ghost"
@@ -534,53 +568,49 @@ export function TGMDexTradesBoard() {
 
                       {/* Trader */}
                       <div className="min-w-[200px]">
-                        <div className="font-mono text-xs text-gray-400">
-                          {trade.trader_address.slice(0, 6)}...{trade.trader_address.slice(-4)}
+                        <div className="flex items-center gap-2">
+                          <div className="font-mono text-xs text-gray-400">
+                            {trade.trader_address.slice(0, 6)}...{trade.trader_address.slice(-4)}
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] h-4 bg-gray-700/50 text-gray-300 border-0 px-1.5 rounded-full"
+                          >
+                            {trade.trader_address_label || "Unknown"}
+                          </Badge>
                         </div>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] h-4 bg-gray-700/50 text-gray-300 border-0 px-1.5 rounded-full mt-0.5"
-                        >
-                          {trade.trader_address_label || "Unknown"}
-                        </Badge>
                       </div>
 
-                      {/* Action */}
-                      <div className="min-w-[100px]">
-                        <Badge
-                          variant="secondary"
-                          className={`text-[10px] h-5 border-0 px-2 rounded-full ${
-                            isBuy
-                              ? "bg-green-500/20 text-green-300"
-                              : "bg-red-500/20 text-red-300"
-                          }`}
-                        >
-                          {trade.action}
-                        </Badge>
-                      </div>
-
-                      {/* Tokens */}
-                      <div className="flex items-center gap-4 min-w-0">
+                      {/* Right-aligned details */}
+                      <div className="flex items-center gap-4 ml-auto min-w-0">
                         <div className="min-w-[100px]">
-                          <div className="text-[10px] text-gray-500">Token</div>
-                          <div className="text-xs font-medium text-gray-300">{trade.token_name}</div>
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] h-5 border-0 px-2 rounded-full ${
+                              isBuy ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"
+                            }`}
+                          >
+                            {trade.action}
+                          </Badge>
                         </div>
-                        <div className="min-w-[100px]">
-                          <div className="text-[10px] text-gray-500">Traded</div>
-                          <div className="text-xs font-medium text-gray-300">{trade.traded_token_name}</div>
+                        <div className="flex items-center gap-4">
+                          <div className="min-w-[100px]">
+                            <div className="text-xs font-medium text-gray-300">{trade.token_name}</div>
+                          </div>
+                          <div className="min-w-[100px]">
+                            <div className="text-xs font-medium text-gray-300">{trade.traded_token_name}</div>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Amounts and Value */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
-                        <div className="min-w-[80px] text-right">
-                          <div className="text-gray-300 font-medium">{formatNumber(trade.token_amount)}</div>
-                        </div>
-                        <div className="min-w-[80px] text-right">
-                          <div className="text-gray-300 font-medium">{formatNumber(trade.traded_token_amount)}</div>
-                        </div>
-                        <div className="min-w-[80px] text-right">
-                          <div className="text-gray-300 font-semibold">{formatUSD(trade.estimated_value_usd)}</div>
+                        <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                          <div className="min-w-[80px] text-right">
+                            <div className="text-gray-300 font-medium">{formatNumber(trade.token_amount)}</div>
+                          </div>
+                          <div className="min-w-[80px] text-right">
+                            <div className="text-gray-300 font-medium">{formatNumber(trade.traded_token_amount)}</div>
+                          </div>
+                          <div className="min-w-[80px] text-right">
+                            <div className="text-gray-300 font-semibold">{formatUSD(trade.estimated_value_usd)}</div>
+                          </div>
                         </div>
                       </div>
                     </div>

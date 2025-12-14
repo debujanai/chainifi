@@ -133,7 +133,7 @@ export function HoldingsBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">📦</div>
@@ -144,7 +144,7 @@ export function HoldingsBoard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:flex-nowrap">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -309,6 +309,7 @@ export function HoldingsBoard() {
 
       <ScrollArea className="flex-1">
         <div className="p-4">
+          <div className="min-w-full">
           {loading && (
             <div className="flex items-center gap-2 p-2 rounded bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-30 mb-3">
               <span className="text-[10px] text-blue-300 font-normal">Loading holdings…</span>
@@ -324,7 +325,7 @@ export function HoldingsBoard() {
           {sections.map((section) => (
             <div key={section.section} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 rounded-l flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
                     backgroundColor: section.section.toLowerCase() === "solana" ? "#14b8a6" : "#eab308"
                   }}>
@@ -344,10 +345,11 @@ export function HoldingsBoard() {
               </div>
 
               <div className="space-y-1">
-                {/* Header row to explain columns */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="min-w-[60px]">Symbol</div>
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500 md:whitespace-nowrap">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[90px] ml-0 pl-3 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="min-w-[60px]">Symbol</div>
+                  </div>
                   <div className="flex-1">Token</div>
                   <div className="min-w-[120px]">Sectors</div>
                   <div className="flex items-center gap-4 min-w-0">
@@ -365,19 +367,18 @@ export function HoldingsBoard() {
                 {section.items.map((item) => (
                   <div
                     key={`${item.chain}-${item.token_address}`}
-                    className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                    className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group md:whitespace-nowrap"
                   >
-                    {/* Three dots menu */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                    </Button>
-
-                    {/* Token Symbol (like Task ID) */}
-                    <div className="font-mono text-xs text-gray-400 min-w-[60px]">{item.token_symbol}</div>
+                    <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[110px] pr-3 ml-0 pl-3 rounded-l">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                      </Button>
+                      <div className="font-mono text-xs text-gray-400 min-w-[60px]">{item.token_symbol}</div>
+                    </div>
 
                     {/* Token Name */}
                     <div className="flex-1 text-sm text-white font-medium min-w-0">
@@ -417,27 +418,21 @@ export function HoldingsBoard() {
                     {/* Value & changes */}
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="text-right min-w-[90px]">
-                        <div className="text-[10px] text-gray-500">Value</div>
                         <div className="text-xs font-medium text-gray-200">{formatUSD(item.value_usd)}</div>
                       </div>
                       <div className="text-right min-w-[80px]">
-                        <div className="text-[10px] text-gray-500">24h %</div>
-                        <div className={`text-xs font-semibold ${item.balance_24h_percent_change >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {formatPercent(item.balance_24h_percent_change)}
-                        </div>
+                        <div className={`text-xs font-semibold ${item.balance_24h_percent_change >= 0 ? "text-green-400" : "text-red-400"}`}>{formatPercent(item.balance_24h_percent_change)}</div>
                       </div>
                       <div className="text-right min-w-[80px]">
-                        <div className="text-[10px] text-gray-500">Holders</div>
                         <div className="text-xs font-medium text-gray-200">{item.holders_count}</div>
                       </div>
                       <div className="text-right min-w-[90px]">
-                        <div className="text-[10px] text-gray-500">Share %</div>
                         <div className="text-xs font-medium text-gray-200">{item.share_of_holdings_percent.toFixed(2)}%</div>
                       </div>
                     </div>
 
                     {/* Additional Info */}
-                    <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                    <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
                       <div className="min-w-[50px]">{item.token_age_days}d</div>
                       <div className="min-w-[90px] text-right">{formatMarketCap(item.market_cap_usd)}</div>
                     </div>
@@ -446,6 +441,7 @@ export function HoldingsBoard() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       </ScrollArea>
     </div>

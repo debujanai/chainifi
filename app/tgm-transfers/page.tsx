@@ -4,9 +4,11 @@ import { TGMTransfersBoard } from "@/components/tgm-transfers-board";
 
 export default function TGMTransfersPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <TGMTransfersBoard />
+      <div className="flex-1 min-w-0">
+        <TGMTransfersBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

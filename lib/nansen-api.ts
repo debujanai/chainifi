@@ -196,9 +196,9 @@ export async function fetchNetflowData(
   }
 
   const filters: SmartMoneyNetflowFilters = {
-      include_smart_money_labels: options?.includeSmartMoneyLabels || ["Fund", "Smart Trader"],
-      exclude_smart_money_labels: options?.excludeSmartMoneyLabels,
-      include_stablecoins: options?.includeStablecoins !== false,
+    include_smart_money_labels: options?.includeSmartMoneyLabels || ["Fund", "Smart Trader"],
+    exclude_smart_money_labels: options?.excludeSmartMoneyLabels,
+    include_stablecoins: options?.includeStablecoins !== false,
     include_native_tokens: options?.includeNativeTokens !== false,
   };
 
@@ -1380,6 +1380,36 @@ function mockHistoricalHoldingsData(): HistoricalHoldingsResponse {
       token_age_days: 1800,
       market_cap_usd: 54000000000,
     },
+    {
+      chain: "ethereum",
+      token_address: "0xC02aaA39b223FE8D0A0E5C4F27eAD9083C756Cc2",
+      token_symbol: "WETH",
+      token_sectors: ["DeFi", "Infrastructure"],
+      smart_money_labels: ["Fund", "Smart Trader"],
+      balance: 12000,
+      value_usd: 122000000,
+      balance_24h_percent_change: 1.2,
+      holders_count: 118,
+      share_of_holdings_percent: 12.1,
+      token_age_days: 1800,
+      market_cap_usd: 35000000000,
+    },
+
+
+    {
+      chain: "ethereum",
+      token_address: "0x111111111117dC0aa78b770fA6A738034120C302",
+      token_symbol: "1INCH",
+      token_sectors: ["DeFi", "Aggregator"],
+      smart_money_labels: ["Smart Trader"],
+      balance: 1200000,
+      value_usd: 480000,
+      balance_24h_percent_change: 0.3,
+      holders_count: 75,
+      share_of_holdings_percent: 1.5,
+      token_age_days: 1000,
+      market_cap_usd: 500000000,
+    },
   ];
 
   const data: HistoricalHoldingData[] = [];
@@ -1578,12 +1608,12 @@ export async function fetchAddressCurrentBalances(options?: {
     hide_spam_token: options?.hideSpamToken !== false,
     filters: options?.filters
       ? {
-          token_symbol: options.filters.tokenSymbol,
-          value_usd:
-            options.filters.minValueUsd != null
-              ? { min: options.filters.minValueUsd }
-              : undefined,
-        }
+        token_symbol: options.filters.tokenSymbol,
+        value_usd:
+          options.filters.minValueUsd != null
+            ? { min: options.filters.minValueUsd }
+            : undefined,
+      }
       : undefined,
     pagination: {
       page: options?.page || 1,
@@ -1656,21 +1686,21 @@ function mockAddressHistoricalBalances(): AddressHistoricalBalancesResponse {
     const ts = new Date(now + h * 60 * 60 * 1000).toISOString();
     return idx % 2 === 0
       ? {
-          block_timestamp: ts,
-          token_address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-          chain: "ethereum",
-          token_amount: 250000 - idx * 5000,
-          value_usd: 250000 - idx * 5000,
-          token_symbol: "USDC",
-        }
+        block_timestamp: ts,
+        token_address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        chain: "ethereum",
+        token_amount: 250000 - idx * 5000,
+        value_usd: 250000 - idx * 5000,
+        token_symbol: "USDC",
+      }
       : {
-          block_timestamp: ts,
-          token_address: "0xC02aaA39b223FE8D0A0E5C4F27eAD9083C756Cc2",
-          chain: "ethereum",
-          token_amount: 120 - idx * 2,
-          value_usd: (120 - idx * 2) * 3500,
-          token_symbol: "WETH",
-        };
+        block_timestamp: ts,
+        token_address: "0xC02aaA39b223FE8D0A0E5C4F27eAD9083C756Cc2",
+        chain: "ethereum",
+        token_amount: 120 - idx * 2,
+        value_usd: (120 - idx * 2) * 3500,
+        token_symbol: "WETH",
+      };
   });
   return {
     data,
@@ -1927,12 +1957,12 @@ export async function fetchAddressCounterparties(options?: {
     group_by: options?.groupBy || "wallet",
     filters: options?.filters
       ? {
-          include_smart_money_labels: options.filters.includeSmartMoneyLabels,
-          interaction_count: options.filters.interactionCount,
-          total_volume_usd: options.filters.totalVolumeUsd,
-          volume_in_usd: options.filters.volumeInUsd,
-          volume_out_usd: options.filters.volumeOutUsd,
-        }
+        include_smart_money_labels: options.filters.includeSmartMoneyLabels,
+        interaction_count: options.filters.interactionCount,
+        total_volume_usd: options.filters.totalVolumeUsd,
+        volume_in_usd: options.filters.volumeInUsd,
+        volume_out_usd: options.filters.volumeOutUsd,
+      }
       : undefined,
     pagination: {
       page: options?.page || 1,
@@ -2396,6 +2426,116 @@ function mockAddressPnl(): AddressPnlResponse {
       max_balance_held_usd: 170000,
       chain: "ethereum",
     },
+    {
+      token_address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+      token_symbol: "LINK",
+      token_price: 15.2,
+      roi_percent_realised: 25.4,
+      pnl_usd_realised: 35000,
+      pnl_usd_unrealised: 12000,
+      roi_percent_unrealised: 8.5,
+      bought_amount: 10000,
+      bought_usd: 140000,
+      cost_basis_usd: 140000,
+      sold_amount: 5000,
+      sold_usd: 85000,
+      avg_sold_price_usd: 17,
+      holding_amount: 5000,
+      holding_usd: 76000,
+      nof_buys: "6",
+      nof_sells: "3",
+      max_balance_held: 10000,
+      max_balance_held_usd: 150000,
+      chain: "ethereum",
+    },
+    {
+      token_address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+      token_symbol: "UNI",
+      token_price: 7.5,
+      roi_percent_realised: 15.8,
+      pnl_usd_realised: 18000,
+      pnl_usd_unrealised: 4500,
+      roi_percent_unrealised: 3.2,
+      bought_amount: 20000,
+      bought_usd: 120000,
+      cost_basis_usd: 120000,
+      sold_amount: 10000,
+      sold_usd: 75000,
+      avg_sold_price_usd: 7.5,
+      holding_amount: 10000,
+      holding_usd: 75000,
+      nof_buys: "5",
+      nof_sells: "2",
+      max_balance_held: 20000,
+      max_balance_held_usd: 150000,
+      chain: "ethereum",
+    },
+    {
+      token_address: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+      token_symbol: "AAVE",
+      token_price: 95,
+      roi_percent_realised: -8.5,
+      pnl_usd_realised: -5000,
+      pnl_usd_unrealised: -2000,
+      roi_percent_unrealised: -2.1,
+      bought_amount: 1000,
+      bought_usd: 100000,
+      cost_basis_usd: 100000,
+      sold_amount: 500,
+      sold_usd: 45000,
+      avg_sold_price_usd: 90,
+      holding_amount: 500,
+      holding_usd: 47500,
+      nof_buys: "3",
+      nof_sells: "1",
+      max_balance_held: 1000,
+      max_balance_held_usd: 100000,
+      chain: "ethereum",
+    },
+    {
+      token_address: "0xD533a949740bb3306d119CC777fa900bA034cd52",
+      token_symbol: "CRV",
+      token_price: 0.6,
+      roi_percent_realised: 5.2,
+      pnl_usd_realised: 2500,
+      pnl_usd_unrealised: 1000,
+      roi_percent_unrealised: 1.8,
+      bought_amount: 100000,
+      bought_usd: 55000,
+      cost_basis_usd: 55000,
+      sold_amount: 50000,
+      sold_usd: 30000,
+      avg_sold_price_usd: 0.6,
+      holding_amount: 50000,
+      holding_usd: 30000,
+      nof_buys: "4",
+      nof_sells: "2",
+      max_balance_held: 100000,
+      max_balance_held_usd: 60000,
+      chain: "ethereum",
+    },
+    // {
+    //   token_address: "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F",
+    //   token_symbol: "SNX",
+    //   token_price: 3.2,
+    //   roi_percent_realised: -2.5,
+    //   pnl_usd_realised: -1500,
+    //   pnl_usd_unrealised: -500,
+    //   roi_percent_unrealised: -0.8,
+    //   bought_amount: 20000,
+    //   bought_usd: 70000,
+    //   cost_basis_usd: 70000,
+    //   sold_amount: 10000,
+    //   sold_usd: 33000,
+    //   avg_sold_price_usd: 3.3,
+    //   holding_amount: 10000,
+    //   holding_usd: 32000,
+    //   nof_buys: "3",
+    //   nof_sells: "2",
+    //   max_balance_held: 20000,
+    //   max_balance_held_usd: 70000,
+    //   chain: "ethereum",
+    // },
   ];
 
   return {
@@ -3248,13 +3388,13 @@ export interface FlowsRequest {
 function mockFlows(): FlowsResponse {
   const now = new Date();
   const data: FlowsData[] = [];
-  
+
   // Generate 7 days of mock data
   for (let i = 6; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().split('T')[0];
-    
+
     data.push({
       date: dateStr,
       price_usd: 100 + Math.random() * 50,

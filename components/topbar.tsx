@@ -9,7 +9,7 @@ export function Topbar() {
 
   return (
     <div
-      className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#1c1e2b] border-b border-[#20222f] z-50"
+      className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#1c1e2b] border-b border-[#20222f] z-50"
       role="banner"
       aria-label="Application Top Bar"
     >

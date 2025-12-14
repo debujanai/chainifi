@@ -370,7 +370,7 @@ export function WhoBoughtSoldBoard() {
           {sections.map((section) => (
             <div key={section.section} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center bg-blue-500/20">
                     <ShoppingCart className="w-3 h-3 text-blue-400" />
                   </div>
@@ -388,20 +388,23 @@ export function WhoBoughtSoldBoard() {
               </div>
 
               <div className="space-y-1">
-                {/* Header row to explain columns */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="min-w-[200px]">Address</div>
-                  <div className="min-w-[120px]">Label</div>
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="min-w-[100px] text-right">Bought USD</div>
-                    <div className="min-w-[100px] text-right">Sold USD</div>
-                    <div className="min-w-[100px] text-right">Trade Volume USD</div>
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[240px] ml-0 pl-3 py-2 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="min-w-[200px]">Address</div>
                   </div>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="min-w-[80px] text-right">Bought Tokens</div>
-                    <div className="min-w-[80px] text-right">Sold Tokens</div>
-                    <div className="min-w-[80px] text-right">Net</div>
+                  <div className="flex items-center gap-4 ml-auto min-w-0">
+                    <div className="min-w-[120px] text-right">Label</div>
+                    <div className="flex items-center gap-4">
+                      <div className="min-w-[100px] text-right">Bought USD</div>
+                      <div className="min-w-[100px] text-right">Sold USD</div>
+                      <div className="min-w-[100px] text-right">Trade Volume USD</div>
+                    </div>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="min-w-[80px] text-right">Bought Tokens</div>
+                      <div className="min-w-[80px] text-right">Sold Tokens</div>
+                      <div className="min-w-[80px] text-right">Net</div>
+                    </div>
                   </div>
                 </div>
                 {section.items.map((trader, idx) => {
@@ -411,75 +414,61 @@ export function WhoBoughtSoldBoard() {
                   return (
                     <div
                       key={`${trader.address}-${idx}`}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                      className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group"
                     >
-                      {/* Three dots menu */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                      </Button>
-
-                      {/* Address */}
-                      <div className="font-mono text-xs text-gray-400 min-w-[200px]">
-                        {trader.address.slice(0, 6)}...{trader.address.slice(-4)}
-                      </div>
-
-                      {/* Label */}
-                      <div className="min-w-[120px]">
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2 rounded-full"
+                      <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[240px] pr-3 ml-0 pl-3 py-2.5 rounded-l">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          {trader.address_label || "Unknown"}
-                        </Badge>
-                      </div>
-
-                      {/* Volume USD */}
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="text-right min-w-[100px]">
-                          <div className="text-[10px] text-gray-500">Bought</div>
-                          <div className="text-xs font-semibold text-green-400">
-                            {formatUSD(trader.bought_volume_usd)}
-                          </div>
-                        </div>
-                        <div className="text-right min-w-[100px]">
-                          <div className="text-[10px] text-gray-500">Sold</div>
-                          <div className="text-xs font-semibold text-red-400">
-                            {formatUSD(trader.sold_volume_usd)}
-                          </div>
-                        </div>
-                        <div className="text-right min-w-[100px]">
-                          <div className="text-[10px] text-gray-500">Total</div>
-                          <div className="text-xs font-semibold text-gray-300">
-                            {formatUSD(trader.trade_volume_usd)}
-                          </div>
+                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <div className="font-mono text-xs text-gray-400 min-w-[200px]">
+                          {trader.address.slice(0, 6)}...{trader.address.slice(-4)}
                         </div>
                       </div>
 
+                      {/* Right-aligned details */}
+                      <div className="flex items-center gap-4 ml-auto min-w-0">
+                        <div className="min-w-[120px] flex justify-end">
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2 rounded-full"
+                          >
+                            {trader.address_label || "Unknown"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right min-w-[100px]">
+                            <div className="text-xs font-semibold text-green-400">{formatUSD(trader.bought_volume_usd)}</div>
+                          </div>
+                          <div className="text-right min-w-[100px]">
+                            <div className="text-xs font-semibold text-red-400">{formatUSD(trader.sold_volume_usd)}</div>
+                          </div>
+                          <div className="text-right min-w-[100px]">
+                            <div className="text-xs font-semibold text-gray-300">{formatUSD(trader.trade_volume_usd)}</div>
+                          </div>
+                        </div>
+                      
                       {/* Token Volumes and Net */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
-                        <div className="min-w-[80px] text-right">
-                          <div className="text-gray-300 font-medium">{formatNumber(trader.bought_token_volume)}</div>
-                        </div>
-                        <div className="min-w-[80px] text-right">
-                          <div className="text-gray-300 font-medium">{formatNumber(trader.sold_token_volume)}</div>
-                        </div>
-                        <div className="min-w-[80px] text-right">
-                          <div className={`font-semibold ${isNetBuyer ? "text-green-400" : "text-red-400"}`}>
-                            {formatUSD(Math.abs(netVolume))}
+                        <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                          <div className="min-w-[80px] text-right">
+                            <div className="text-gray-300 font-medium">{formatNumber(trader.bought_token_volume)}</div>
                           </div>
-                          <div className="flex items-center justify-end gap-1 mt-0.5">
-                            {isNetBuyer ? (
-                              <TrendingUp className="w-3 h-3 text-green-400" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3 text-red-400" />
-                            )}
-                            <span className={`text-[10px] ${isNetBuyer ? "text-green-400" : "text-red-400"}`}>
-                              {isNetBuyer ? "Buyer" : "Seller"}
-                            </span>
+                          <div className="min-w-[80px] text-right">
+                            <div className="text-gray-300 font-medium">{formatNumber(trader.sold_token_volume)}</div>
+                          </div>
+                          <div className="min-w-[80px] text-right">
+                            <div className={`font-semibold ${isNetBuyer ? "text-green-400" : "text-red-400"}`}>{formatUSD(Math.abs(netVolume))}</div>
+                            <div className="flex items-center justify-end gap-1 mt-0.5">
+                              {isNetBuyer ? (
+                                <TrendingUp className="w-3 h-3 text-green-400" />
+                              ) : (
+                                <TrendingDown className="w-3 h-3 text-red-400" />
+                              )}
+                              <span className={`text-[10px] ${isNetBuyer ? "text-green-400" : "text-red-400"}`}>{isNetBuyer ? "Buyer" : "Seller"}</span>
+                            </div>
                           </div>
                         </div>
                       </div>

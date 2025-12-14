@@ -4,9 +4,11 @@ import { HoldingsBoard } from "@/components/holdings-board";
 
 export default function HoldingsPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <HoldingsBoard />
+      <div className="flex-1 min-w-0">
+        <HoldingsBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

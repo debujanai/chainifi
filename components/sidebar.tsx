@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ChevronDown, Plus, Search, TrendingUp, Wallet, Clock, ArrowLeftRight, BarChart3, Repeat, FileText, Users, Network, DollarSign, Tag, Filter, Activity, ArrowRight, ArrowUpDown, Send, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ export function Sidebar() {
       id="app-left-sidebar"
       aria-label="Primary navigation"
       className={`
-        md:static md:translate-x-0 md:w-60 md:h-screen md:flex md:flex-col
+        lg:static lg:translate-x-0 lg:w-60 lg:h-screen lg:flex lg:flex-col
         fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-60 flex flex-col
         border-r border-[#20222f] bg-[#1c1e2b]
         transform transition-transform duration-300 ease-in-out z-40
@@ -24,10 +25,8 @@ export function Sidebar() {
     >
       <div className="p-3 border-b border-[#20222f]">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-sm"></div>
-          </div>
-          <span className="text-sm font-medium text-white">Linear</span>
+          <Image src="/logo.png" alt="ChainfiAI Logo" width={24} height={24} className="rounded-md" />
+          <span className="text-sm font-medium text-white">ChainfiAI</span>
           <Users className="w-4 h-4 text-gray-400 ml-auto" />
         </div>
 
@@ -59,9 +58,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/netflows">
-                <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-3 h-3 text-green-400" />
-                </div>
+                <TrendingUp className="w-4 h-4 text-green-400" />
                 Netflows
               </Link>
             </Button>
@@ -71,9 +68,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/holdings">
-                <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Wallet className="w-3 h-3 text-blue-400" />
-                </div>
+                <Wallet className="w-4 h-4 text-blue-400" />
                 Holdings
               </Link>
             </Button>
@@ -83,9 +78,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/historical-holdings">
-                <div className="w-4 h-4 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Clock className="w-3 h-3 text-purple-400" />
-                </div>
+                <Clock className="w-4 h-4 text-purple-400" />
                 Historical Holdings
               </Link>
             </Button>
@@ -95,9 +88,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/dex-trades">
-                <div className="w-4 h-4 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <ArrowLeftRight className="w-3 h-3 text-orange-400" />
-                </div>
+                <ArrowLeftRight className="w-4 h-4 text-orange-400" />
                 DEX Trades
               </Link>
             </Button>
@@ -107,9 +98,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/perp-trades">
-                <div className="w-4 h-4 rounded-full bg-red-500/20 flex items-center justify-center">
-                  <BarChart3 className="w-3 h-3 text-red-400" />
-                </div>
+                <BarChart3 className="w-4 h-4 text-red-400" />
                 Perp Trades
               </Link>
             </Button>
@@ -118,10 +107,8 @@ export function Sidebar() {
               variant="ghost"
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
-              <Link href="/tgm-jup-dca">
-                <div className="w-4 h-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                  <Repeat className="w-3 h-3 text-cyan-400" />
-                </div>
+              <Link href="/dcas">
+                <Repeat className="w-4 h-4 text-cyan-400" />
                 Jupiter DCAs
               </Link>
             </Button>
@@ -137,9 +124,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/address-balances">
-                <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Wallet className="w-3 h-3 text-blue-400" />
-                </div>
+                <Wallet className="w-4 h-4 text-blue-400" />
                 Address Current Balances
               </Link>
             </Button>
@@ -149,9 +134,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/address-historical-balances">
-                <div className="w-4 h-4 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Clock className="w-3 h-3 text-purple-400" />
-                </div>
+                <Clock className="w-4 h-4 text-purple-400" />
                 Address Historical Balances
               </Link>
             </Button>
@@ -161,9 +144,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/address-transactions">
-                <div className="w-4 h-4 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                  <FileText className="w-3 h-3 text-indigo-400" />
-                </div>
+                <FileText className="w-4 h-4 text-indigo-400" />
                 Address Transactions
               </Link>
             </Button>
@@ -173,9 +154,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/counterparties">
-                <div className="w-4 h-4 rounded-full bg-pink-500/20 flex items-center justify-center">
-                  <Users className="w-3 h-3 text-pink-400" />
-                </div>
+                <Users className="w-4 h-4 text-pink-400" />
                 Address Counterparties
               </Link>
             </Button>
@@ -185,9 +164,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/related-wallets">
-                <div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center">
-                  <Network className="w-3 h-3 text-teal-400" />
-                </div>
+                <Network className="w-4 h-4 text-teal-400" />
                 Address Related Wallets
               </Link>
             </Button>
@@ -197,9 +174,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/pnl">
-                <div className="w-4 h-4 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                  <DollarSign className="w-3 h-3 text-yellow-400" />
-                </div>
+                <DollarSign className="w-4 h-4 text-yellow-400" />
                 Address PnL & Trade Performance
               </Link>
             </Button>
@@ -209,9 +184,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/address-labels">
-                <div className="w-4 h-4 rounded-full bg-rose-500/20 flex items-center justify-center">
-                  <Tag className="w-3 h-3 text-rose-400" />
-                </div>
+                <Tag className="w-4 h-4 text-rose-400" />
                 Address Labels
               </Link>
             </Button>
@@ -221,9 +194,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/entity-name-search">
-                <div className="w-4 h-4 rounded-full bg-violet-500/20 flex items-center justify-center">
-                  <Search className="w-3 h-3 text-violet-400" />
-                </div>
+                <Search className="w-4 h-4 text-violet-400" />
                 Entity Name Search
               </Link>
             </Button>
@@ -233,9 +204,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/address-perp-positions">
-                <div className="w-4 h-4 rounded-full bg-red-500/20 flex items-center justify-center">
-                  <BarChart3 className="w-3 h-3 text-red-400" />
-                </div>
+                <BarChart3 className="w-4 h-4 text-red-400" />
                 Address Perp Positions
               </Link>
             </Button>
@@ -245,9 +214,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/address-perp-trades">
-                <div className="w-4 h-4 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-3 h-3 text-orange-400" />
-                </div>
+                <TrendingUp className="w-4 h-4 text-orange-400" />
                 Address Perp Trades
               </Link>
             </Button>
@@ -257,9 +224,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/hyperliquid-leaderboard">
-                <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <Trophy className="w-3 h-3 text-amber-400" />
-                </div>
+                <Trophy className="w-4 h-4 text-amber-400" />
                 Hyperliquid Address Leaderboard
               </Link>
             </Button>
@@ -275,9 +240,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/token-screener">
-                <div className="w-4 h-4 rounded-full bg-slate-500/20 flex items-center justify-center">
-                  <Filter className="w-3 h-3 text-slate-400" />
-                </div>
+                <Filter className="w-4 h-4 text-slate-400" />
                 Token Screener
               </Link>
             </Button>
@@ -287,9 +250,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/flow-intelligence">
-                <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <Activity className="w-3 h-3 text-emerald-400" />
-                </div>
+                <Activity className="w-4 h-4 text-emerald-400" />
                 Flow Intelligence
               </Link>
             </Button>
@@ -299,9 +260,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/holders">
-                <div className="w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center">
-                  <Users className="w-3 h-3 text-sky-400" />
-                </div>
+                <Users className="w-4 h-4 text-sky-400" />
                 Holders
               </Link>
             </Button>
@@ -311,9 +270,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/flows">
-                <div className="w-4 h-4 rounded-full bg-lime-500/20 flex items-center justify-center">
-                  <ArrowRight className="w-3 h-3 text-lime-400" />
-                </div>
+                <ArrowRight className="w-4 h-4 text-lime-400" />
                 Flows
               </Link>
             </Button>
@@ -323,9 +280,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/who-bought-sold">
-                <div className="w-4 h-4 rounded-full bg-fuchsia-500/20 flex items-center justify-center">
-                  <ArrowUpDown className="w-3 h-3 text-fuchsia-400" />
-                </div>
+                <ArrowUpDown className="w-4 h-4 text-fuchsia-400" />
                 Who Bought/Sold
               </Link>
             </Button>
@@ -335,9 +290,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/tgm-dex-trades">
-                <div className="w-4 h-4 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <ArrowLeftRight className="w-3 h-3 text-orange-400" />
-                </div>
+                <ArrowLeftRight className="w-4 h-4 text-orange-400" />
                 DEX Trades
               </Link>
             </Button>
@@ -347,9 +300,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/tgm-transfers">
-                <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Send className="w-3 h-3 text-blue-400" />
-                </div>
+                <Send className="w-4 h-4 text-blue-400" />
                 Token Transfers
               </Link>
             </Button>
@@ -359,9 +310,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/tgm-jup-dca">
-                <div className="w-4 h-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                  <Repeat className="w-3 h-3 text-cyan-400" />
-                </div>
+                <Repeat className="w-4 h-4 text-cyan-400" />
                 Jupiter DCAs
               </Link>
             </Button>
@@ -371,9 +320,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/tgm-pnl-leaderboard">
-                <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <Trophy className="w-3 h-3 text-amber-400" />
-                </div>
+                <Trophy className="w-4 h-4 text-amber-400" />
                 PnL Leaderboard
               </Link>
             </Button>
@@ -383,9 +330,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/perp-screener">
-                <div className="w-4 h-4 rounded-full bg-slate-500/20 flex items-center justify-center">
-                  <Filter className="w-3 h-3 text-slate-400" />
-                </div>
+                <Filter className="w-4 h-4 text-slate-400" />
                 Perp Screener
               </Link>
             </Button>
@@ -395,9 +340,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/tgm-perp-pnl-leaderboard">
-                <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <Trophy className="w-3 h-3 text-amber-400" />
-                </div>
+                <Trophy className="w-4 h-4 text-amber-400" />
                 Perp PnL Leaderboard
               </Link>
             </Button>
@@ -407,9 +350,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/tgm-perp-positions">
-                <div className="w-4 h-4 rounded-full bg-red-500/20 flex items-center justify-center">
-                  <BarChart3 className="w-3 h-3 text-red-400" />
-                </div>
+                <BarChart3 className="w-4 h-4 text-red-400" />
                 Perp Positions
               </Link>
             </Button>
@@ -419,9 +360,7 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/tgm-perp-trades">
-                <div className="w-4 h-4 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-3 h-3 text-orange-400" />
-                </div>
+                <TrendingUp className="w-4 h-4 text-orange-400" />
                 Perp Trades
               </Link>
             </Button>
@@ -437,16 +376,14 @@ export function Sidebar() {
               className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
             >
               <Link href="/portfolio-defi-holdings">
-                <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Wallet className="w-3 h-3 text-blue-400" />
-                </div>
+                <Wallet className="w-4 h-4 text-blue-400" />
                 Portfolio DeFi Holdings
               </Link>
             </Button>
           </div>
         </div>
 
-        
+
       </ScrollArea>
     </aside>
   );

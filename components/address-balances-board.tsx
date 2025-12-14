@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Plus, Loader, Calendar } from "lucide-react";
+import { MoreHorizontal, Plus, Loader, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,6 +59,7 @@ export function AddressBalancesBoard() {
   const [error, setError] = useState<string | null>(null);
   const [allBalances, setAllBalances] = useState<AddressBalanceData[]>([]);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   const [groupBy, setGroupBy] = useState<"chain" | "value">("chain");
   const [sortBy, setSortBy] = useState<"value" | "amount">("value");
   const [sortDirection, setSortDirection] = useState<"DESC" | "ASC">("DESC");
@@ -121,155 +122,158 @@ export function AddressBalancesBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
-              <span className="text-white font-normal">Address Current Balances</span>
+              <span className="text-white font-normal text-sm">Address Current Balances</span>
               <Button variant="ghost" size="icon" className="h-5 w-5">
                 <MoreHorizontal className="w-3 h-3 text-gray-400" />
               </Button>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`h-8 text-xs font-normal ${filterOpen ? "bg-[#272936] text-white" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-              onClick={() => setFilterOpen((v) => !v)}
-            >
-              Filters
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                  Sort: {sortBy === "value" ? "Value" : "Amount"} {sortDirection === "DESC" ? "↓" : "↑"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[12rem]">
-                <DropdownMenuItem onClick={() => setSortBy("value")}>Sort by Value</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("amount")}>Sort by Amount</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
-                  Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                  Group: {groupBy === "chain" ? "Chain" : "Value"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[10rem]">
-                <DropdownMenuItem onClick={() => setGroupBy("chain")}>Group by Chain</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setGroupBy("value")}>Group by Value</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
 
-        {/* Address/Entity Input */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 flex-1">
-            <div className="flex items-center gap-1.5">
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Search & Primary Actions */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Input
+                type="text"
+                placeholder={queryMode === "address" ? "0x..." : "Coinbase"}
+                value={queryMode === "address" ? address : entityName}
+                onChange={(e) => queryMode === "address" ? setAddress(e.target.value) : setEntityName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && loadBalances()}
+                className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
+              />
               <Button
-                variant={queryMode === "address" ? "secondary" : "ghost"}
+                variant="ghost"
                 size="sm"
-                className={`h-8 text-xs ${queryMode === "address" ? "bg-blue-500/20 border-blue-500/50 text-blue-300" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-                onClick={() => setQueryMode("address")}
+                className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+                onClick={loadBalances}
+                disabled={loading}
               >
-                Address
-              </Button>
-              <Button
-                variant={queryMode === "entity" ? "secondary" : "ghost"}
-                size="sm"
-                className={`h-8 text-xs ${queryMode === "entity" ? "bg-blue-500/20 border-blue-500/50 text-blue-300" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-                onClick={() => setQueryMode("entity")}
-              >
-                Entity
+                {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
               </Button>
             </div>
-            <Input
-              type="text"
-              placeholder={queryMode === "address" ? "Enter address (0x...)" : "Enter entity name"}
-              value={queryMode === "address" ? address : entityName}
-              onChange={(e) => queryMode === "address" ? setAddress(e.target.value) : setEntityName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && loadBalances()}
-              className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal min-w-[100px]">
-                {chain.charAt(0).toUpperCase() + chain.slice(1)}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
-              {availableChains.map((c) => (
-                <DropdownMenuItem key={c} onClick={() => setChain(c)}>
-                  {c.charAt(0).toUpperCase() + c.slice(1)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-normal"
-            onClick={loadBalances}
-            disabled={loading}
-          >
-            {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Load"}
-          </Button>
-        </div>
-      </div>
 
-      {filterOpen && (
-        <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Secondary Row: Toggles & Filter Trigger */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter className="w-3 h-3 mr-2" />
+                Filters
+              </Button>
+
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${queryMode === "address" ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setQueryMode("address")}
+                >
+                  Address
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${queryMode === "entity" ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setQueryMode("entity")}
+                >
+                  Entity
+                </Button>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
+                    {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  {availableChains.map((c) => (
+                    <DropdownMenuItem key={c} onClick={() => setChain(c)}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+                    Sort: {sortBy === "value" ? "Value" : "Amount"} {sortDirection === "DESC" ? "↓" : "↑"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[12rem]">
+                  <DropdownMenuItem onClick={() => setSortBy("value")}>Sort by Value</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("amount")}>Sort by Amount</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
+                    Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+                    Group: {groupBy === "chain" ? "Chain" : "Value"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  <DropdownMenuItem onClick={() => setGroupBy("chain")}>Group by Chain</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setGroupBy("value")}>Group by Value</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Collapsible Filter Grid */}
+          <div className={`${showFilters ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
             {/* Token Symbol Filter */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Token Symbol</label>
-              <input
+            <div className="lg:col-span-3">
+              <Input
                 type="text"
                 value={tokenSymbolFilter}
                 onChange={(e) => setTokenSymbolFilter(e.target.value)}
-                placeholder="e.g. USDC"
-                className="h-7 text-xs bg-[#141723] border border-[#20222f] text-white placeholder:text-gray-500 px-2 rounded w-full"
+                placeholder="Token Symbol (e.g. USDC)"
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
               />
             </div>
 
             {/* Min Value USD */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Min Value (USD)</label>
-              <input
+            <div className="lg:col-span-3">
+              <Input
                 type="number"
                 value={minValueUsd || ""}
                 onChange={(e) => setMinValueUsd(e.target.value ? parseFloat(e.target.value) : 0)}
-                placeholder="0"
-                className="h-7 text-xs bg-[#141723] border border-[#20222f] text-white placeholder:text-gray-500 px-2 rounded w-full"
+                placeholder="Min Value (USD)"
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
               />
             </div>
 
             {/* Hide Spam */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Options</label>
+            <div className="lg:col-span-3">
               <Button
-                variant={hideSpam ? "secondary" : "outline"}
+                variant="ghost"
                 size="sm"
-                className={`h-7 text-xs justify-start ${hideSpam ? "bg-green-500/20 border-green-500/50 text-green-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                className={`h-8 text-xs w-full justify-start ${hideSpam ? "text-yellow-500 bg-yellow-500/10" : "text-gray-400 hover:text-gray-200 bg-[#171a26] border border-[#20222f]"}`}
                 onClick={() => setHideSpam(!hideSpam)}
               >
-                {hideSpam ? "✓" : ""} Hide Spam Tokens
+                <Filter className="w-3 h-3 mr-2" />
+                Hide Spam Tokens
               </Button>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="py-4 pr-4 pl-0">
           {loading && (
             <div className="flex items-center justify-center py-6">
               <Loader className="w-4 h-4 text-blue-400 animate-spin" />
@@ -285,14 +289,14 @@ export function AddressBalancesBoard() {
           {sections.map((section) => (
             <div key={section.section} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
                     backgroundColor: section.section.toLowerCase().includes("ethereum") ? "#eab308" :
-                                     section.section.toLowerCase().includes("solana") ? "#14b8a6" :
-                                     section.section.toLowerCase().includes("high") ? "#22c55e" :
-                                     section.section.toLowerCase().includes("medium") ? "#f59e0b" :
-                                     section.section.toLowerCase().includes("low") ? "#6b7280" :
-                                     "#6b7280"
+                      section.section.toLowerCase().includes("solana") ? "#14b8a6" :
+                        section.section.toLowerCase().includes("high") ? "#22c55e" :
+                          section.section.toLowerCase().includes("medium") ? "#f59e0b" :
+                            section.section.toLowerCase().includes("low") ? "#6b7280" :
+                              "#6b7280"
                   }}>
                     <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
                   </div>
@@ -310,69 +314,75 @@ export function AddressBalancesBoard() {
               </div>
 
               <div className="space-y-1">
-                {/* Header row */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="font-mono min-w-[60px]">Symbol</div>
-                  <div className="flex-1">Token</div>
-                  {groupBy !== "chain" && (
-                    <div className="min-w-[80px]">Chain</div>
-                  )}
-                  <div className="min-w-[100px] text-right">Amount</div>
-                  <div className="min-w-[80px] text-right">Price</div>
-                  <div className="min-w-[80px] text-right">Value</div>
+                <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                  <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[80px] py-2 pl-7 pr-3 rounded-l border-y border-l border-transparent">
+                    <div className="h-6 w-6" />
+                    <div className="font-mono min-w-[60px]">Symbol</div>
+                  </div>
+                  <div className="flex-1 flex items-center justify-between min-w-0 gap-4 py-2 pr-3 border-y border-r border-transparent">
+                    <div className="flex-1">Token</div>
+                    {groupBy !== "chain" && (
+                      <div className="min-w-[80px]">Chain</div>
+                    )}
+                    <div className="min-w-[100px] text-right">Amount</div>
+                    <div className="min-w-[80px] text-right">Price</div>
+                    <div className="min-w-[80px] text-right">Value</div>
+                  </div>
                 </div>
                 {section.items.map((item) => (
                   <div
                     key={`${item.chain}-${item.token_address}`}
-                    className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                    className="flex items-stretch group whitespace-nowrap"
                   >
-                    {/* Three dots menu */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                    </Button>
-
-                    {/* Token Symbol */}
-                    <div className="font-mono text-xs text-gray-400 min-w-[60px]">
-                      {item.token_symbol}
-                    </div>
-
-                    {/* Token Name */}
-                    <div className="flex-1 text-sm text-white font-medium min-w-0">
-                      {item.token_name || item.token_symbol}
-                    </div>
-
-                    {/* Chain (if not grouping by chain) */}
-                    {groupBy !== "chain" && (
-                      <div className="min-w-[80px]">
-                        <Badge variant="secondary" className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2">
-                          {item.chain.charAt(0).toUpperCase() + item.chain.slice(1)}
-                        </Badge>
-                      </div>
-                    )}
-
-                    {/* Amount */}
-                    <div className="min-w-[100px] text-right">
-                      <div className="text-xs font-medium text-gray-300">
-                        {item.token_amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                    <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                      <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[80px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <div className="font-mono text-xs text-gray-400 min-w-[60px]">
+                          {item.token_symbol}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Price */}
-                    <div className="min-w-[80px] text-right">
-                      <div className="text-xs text-gray-400">
-                        {formatUSD(item.price_usd)}
+                    <div className="flex-1 flex items-center justify-between min-w-0 gap-4 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150">
+                      {/* Token Name */}
+                      <div className="flex-1 text-xs text-white font-medium min-w-0">
+                        {item.token_name || item.token_symbol}
                       </div>
-                    </div>
 
-                    {/* Value */}
-                    <div className="min-w-[80px] text-right">
-                      <div className="text-xs font-semibold text-white">
-                        {formatUSD(item.value_usd)}
+                      {/* Chain (if not grouping by chain) */}
+                      {groupBy !== "chain" && (
+                        <div className="min-w-[80px]">
+                          <Badge variant="secondary" className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2">
+                            {item.chain.charAt(0).toUpperCase() + item.chain.slice(1)}
+                          </Badge>
+                        </div>
+                      )}
+
+                      {/* Amount */}
+                      <div className="min-w-[100px] text-right">
+                        <div className="text-xs font-medium text-gray-300">
+                          {item.token_amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div className="min-w-[80px] text-right">
+                        <div className="text-xs text-gray-400">
+                          {formatUSD(item.price_usd)}
+                        </div>
+                      </div>
+
+                      {/* Value */}
+                      <div className="min-w-[80px] text-right ml-auto">
+                        <div className="text-xs font-semibold text-white">
+                          {formatUSD(item.value_usd)}
+                        </div>
                       </div>
                     </div>
                   </div>

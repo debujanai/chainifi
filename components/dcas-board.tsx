@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { DcaOrder, DcasResponse, fetchSmartMoneyDcas } from "@/lib/nansen-api";
 
 function formatUSD(value: number): string {
@@ -77,48 +78,45 @@ export function DcasBoard() {
   const [sortBy, setSortBy] = useState<"dca_created_at" | "dca_updated_at" | "deposit_value_usd">("dca_created_at");
   const [sortDirection, setSortDirection] = useState<"DESC" | "ASC">("DESC");
 
-  useEffect(() => {
+  const load = async () => {
     let mounted = true;
     setLoading(true);
     setError(null);
+    try {
+      const activeLabels = Object.entries(includeLabels)
+        .filter(([_, included]) => included)
+        .map(([label]) => label);
+      const excludedLabels = Object.entries(excludeLabels)
+        .filter(([_, excluded]) => excluded)
+        .map(([label]) => label);
+      const res: DcasResponse = await fetchSmartMoneyDcas({
+        includeSmartMoneyLabels: activeLabels.length > 0 ? activeLabels : ["Fund", "Smart Trader"],
+        excludeSmartMoneyLabels: excludedLabels.length > 0 ? excludedLabels : undefined,
+        sortBy: [{ field: sortBy, direction: sortDirection }],
+        perPage: 20,
+      });
+      const filtered = res.data.filter((o) =>
+        searchTrader
+          ? (o.trader_address_label || "").toLowerCase().includes(searchTrader.toLowerCase()) ||
+            o.trader_address.toLowerCase().includes(searchTrader.toLowerCase())
+          : true
+      );
+      setAllOrders(filtered);
+      setSections(groupDcas(filtered, groupBy));
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message || "Failed to load DCAs");
+    } finally {
+      setLoading(false);
+    }
+    return () => {
+      mounted = false;
+    };
+  };
 
-    (async () => {
-      try {
-        const activeLabels = Object.entries(includeLabels)
-          .filter(([_, included]) => included)
-          .map(([label]) => label);
-
-        const excludedLabels = Object.entries(excludeLabels)
-          .filter(([_, excluded]) => excluded)
-          .map(([label]) => label);
-
-        const res: DcasResponse = await fetchSmartMoneyDcas({
-          includeSmartMoneyLabels: activeLabels.length > 0 ? activeLabels : ["Fund", "Smart Trader"],
-          excludeSmartMoneyLabels: excludedLabels.length > 0 ? excludedLabels : undefined,
-          sortBy: [{ field: sortBy, direction: sortDirection }],
-          perPage: 20,
-        });
-
-        if (!mounted) return;
-
-        const filtered = res.data.filter((o) =>
-          searchTrader
-            ? (o.trader_address_label || "").toLowerCase().includes(searchTrader.toLowerCase()) ||
-              o.trader_address.toLowerCase().includes(searchTrader.toLowerCase())
-            : true
-        );
-
-        setAllOrders(filtered);
-        setSections(groupDcas(filtered, groupBy));
-        setLoading(false);
-      } catch (e: any) {
-        console.error(e);
-        if (!mounted) return;
-        setError(e?.message || "Failed to load DCAs");
-        setLoading(false);
-      }
-    })();
-
+  useEffect(() => {
+    let mounted = true;
+    load();
     return () => {
       mounted = false;
     };
@@ -127,7 +125,7 @@ export function DcasBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
@@ -137,8 +135,34 @@ export function DcasBoard() {
               </Button>
             </div>
           </div>
+        </div>
 
+        <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
+            <Input
+              type="text"
+              placeholder="Search trader or address"
+              value={searchTrader}
+              onChange={(e) => setSearchTrader(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  load();
+                }
+              }}
+              className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-normal"
+              onClick={() => load()}
+              disabled={loading}
+            >
+              {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Load"}
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -157,9 +181,7 @@ export function DcasBoard() {
                 <DropdownMenuItem onClick={() => setSortBy("dca_created_at")}>Sort by Created At</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setSortBy("dca_updated_at")}>Sort by Updated At</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setSortBy("deposit_value_usd")}>Sort by Deposit USD</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
-                  Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
@@ -174,17 +196,6 @@ export function DcasBoard() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
-
-        {/* Search Input */}
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder="Search trader or address"
-            value={searchTrader}
-            onChange={(e) => setSearchTrader(e.target.value)}
-            className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
-          />
         </div>
       </div>
 
@@ -247,7 +258,7 @@ export function DcasBoard() {
           {sections.map((section) => (
             <div key={section.section} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
                     backgroundColor: section.section.toLowerCase() === "active" ? "#22c55e" :
                                      section.section.toLowerCase() === "paused" ? "#f59e0b" :
@@ -271,111 +282,111 @@ export function DcasBoard() {
               </div>
 
               <div className="space-y-1">
-                {/* Header row */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="w-[150px] flex-shrink-0">Trader</div>
-                  <div className="w-[140px] flex-shrink-0">Pair</div>
-                  <div className="w-[140px] flex-shrink-0">Vault</div>
-                  <div className="flex-1 flex items-center justify-end gap-4">
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500 md:whitespace-nowrap">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-2 min-w-[146px] ml-0 pl-3 pr-2 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="flex-1 min-w-0 truncate">Trader</div>
+                  </div>
+                  <div className="flex-1 flex items-center gap-1.5 justify-end min-w-0">
+                    <div className="min-w-[160px]">Address</div>
+                    <div className="min-w-[140px]">Pair</div>
+                    <div className="min-w-[140px]">Vault</div>
                     <div className="min-w-[72px] text-right">Deposit</div>
                     <div className="min-w-[72px] text-right">Spent</div>
                     <div className="min-w-[72px] text-right">Redeemed</div>
                     <div className="min-w-[80px] text-right">Deposit USD</div>
+                    {groupBy !== "status" && (
+                      <div className="min-w-[90px]">Status</div>
+                    )}
+                    <div className="min-w-[160px] text-right">Created</div>
+                    <div className="min-w-[180px] text-right">Tx Hash</div>
                   </div>
-                  {groupBy !== "status" && (
-                    <div className="w-[90px] flex-shrink-0">Status</div>
-                  )}
-                  <div className="w-[150px] flex-shrink-0 text-right">Created</div>
-                  <div className="w-[180px] flex-shrink-0 text-right">Tx Hash</div>
                 </div>
                 {section.items.map((o, idx) => (
                   <div
                     key={`${o.transaction_hash}-${idx}`}
-                    className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                    className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors duration-150 group whitespace-nowrap"
                   >
-                    {/* Three dots menu */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                    </Button>
-
-                    {/* Trader */}
-                    <div className="w-[150px] flex-shrink-0">
-                      <div className="text-sm text-white font-medium">{o.trader_address_label || "Smart Money"}</div>
-                      <div className="text-[10px] text-gray-500 font-mono truncate">{o.trader_address.slice(0, 8)}...{o.trader_address.slice(-6)}</div>
-                    </div>
-
-                    {/* Pair */}
-                    <div className="w-[140px] flex-shrink-0">
-                      <div className="flex items-center gap-1 text-sm text-white font-medium">
-                        <span>{o.input_token_symbol}</span>
-                        <ArrowRight className="w-3 h-3 text-gray-500" />
-                        <span>{o.output_token_symbol}</span>
+                    <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] transition-colors duration-150 flex items-center gap-2 min-w-[146px] pr-2 ml-0 pl-3 rounded-l">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                      </Button>
+                      <div className="text-xs text-gray-300 min-w-0 leading-tight">
+                        <div className="text-sm text-white font-medium truncate">{o.trader_address_label || "Smart Money"}</div>
                       </div>
                     </div>
 
-                    {/* Vault */}
-                    <div className="w-[140px] flex-shrink-0">
-                      <div className="text-xs text-gray-400 font-mono truncate">{o.dca_vault_address.slice(0, 8)}...{o.dca_vault_address.slice(-6)}</div>
-                    </div>
-
-                    {/* Metrics */}
-                    <div className="flex-1 flex items-center justify-end gap-4">
-                      <div className="min-w-[72px] text-right">
+                    <div className="flex-1 flex items-center gap-1.5 justify-end min-w-0">
+                      <div className="min-w-[160px]">
+                        <div className="text-xs text-gray-500 font-mono truncate">{o.trader_address.slice(0, 8)}...{o.trader_address.slice(-6)}</div>
+                      </div>
+                      <div className="min-w-[140px]">
+                        <div className="flex items-center gap-1 text-sm text-white font-medium">
+                          <span>{o.input_token_symbol}</span>
+                          <ArrowRight className="w-3 h-3 text-gray-500" />
+                          <span>{o.output_token_symbol}</span>
+                        </div>
+                      </div>
+                      <div className="min-w-[140px]">
+                        <div className="text-xs text-gray-400 font-mono truncate">{o.dca_vault_address.slice(0, 8)}...{o.dca_vault_address.slice(-6)}</div>
+                      </div>
+                      <div className="text-right min-w-[72px]">
                         <div className="text-xs text-gray-300">{o.deposit_token_amount.toLocaleString()}</div>
                       </div>
-                      <div className="min-w-[72px] text-right">
+                      <div className="text-right min-w-[72px]">
                         <div className="text-xs text-gray-300">{o.token_spent_amount.toLocaleString()}</div>
                       </div>
-                      <div className="min-w-[72px] text-right">
+                      <div className="text-right min-w-[72px]">
                         <div className="text-xs text-gray-300">{o.output_token_redeemed_amount.toLocaleString()}</div>
                       </div>
-                      <div className="min-w-[80px] text-right">
+                      <div className="text-right min-w-[80px]">
                         <div className="text-xs font-semibold text-white">{formatUSD(o.deposit_value_usd)}</div>
                       </div>
-                    </div>
-
-                    {/* Status (if not grouping by status) */}
-                    {groupBy !== "status" && (
-                      <div className="w-[90px] flex-shrink-0">
-                        <Badge variant="secondary" className={`text-[10px] h-5 border-0 px-2 rounded-full ${
-                          o.dca_status === "Active" ? "bg-green-500/20 text-green-300" :
-                          o.dca_status === "Paused" ? "bg-yellow-500/20 text-yellow-300" :
-                          "bg-gray-700/50 text-gray-300"
-                        }`}>
-                          {o.dca_status}
-                        </Badge>
+                      {groupBy !== "status" && (
+                        <div className="min-w-[90px]">
+                          <Badge variant="secondary" className={`text-[10px] h-5 border-0 px-2 rounded-full ${
+                            o.dca_status === "Active" ? "bg-green-500/20 text-green-300" :
+                            o.dca_status === "Paused" ? "bg-yellow-500/20 text-yellow-300" :
+                            "bg-gray-700/50 text-gray-300"
+                          }`}>
+                            {o.dca_status}
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="text-right min-w-[160px]">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-end gap-1 cursor-default">
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/10 text-orange-400">
+                                  <Calendar className="w-3 h-3" />
+                                </span>
+                                <span className="text-xs text-gray-200 font-medium">{formatTime(o.dca_created_at)}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <span className="text-[10px] text-gray-300">Updated {formatTime(o.dca_updated_at)}</span>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
-                    )}
-
-                    {/* Created */}
-                    <div className="w-[160px] flex-shrink-0">
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/10 text-orange-400">
-                          <Calendar className="w-3 h-3" />
-                        </span>
-                        <span className="text-xs text-gray-200 font-medium">{formatTime(o.dca_created_at)}</span>
+                      <div className="flex items-center justify-end gap-2 min-w-[180px]">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" 
+                          onClick={() => navigator.clipboard.writeText(o.transaction_hash)}
+                        >
+                          <Copy className="w-3.5 h-3.5 text-gray-400" />
+                        </Button>
+                        <div className="text-[10px] text-gray-500 font-mono truncate max-w-[140px]">
+                          {o.transaction_hash.slice(0, 8)}...{o.transaction_hash.slice(-6)}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-gray-500 text-right mt-0.5">updated {formatTime(o.dca_updated_at)}</div>
-                    </div>
-
-                    {/* Tx Hash */}
-                    <div className="w-[180px] flex-shrink-0 flex items-center justify-end gap-2">
-                      <div className="text-[10px] text-gray-500 font-mono truncate max-w-[140px]">
-                        {o.transaction_hash.slice(0, 8)}...{o.transaction_hash.slice(-6)}
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" 
-                        onClick={() => navigator.clipboard.writeText(o.transaction_hash)}
-                      >
-                        <Copy className="w-3.5 h-3.5 text-gray-400" />
-                      </Button>
                     </div>
                   </div>
                 ))}

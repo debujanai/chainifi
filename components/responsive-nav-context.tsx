@@ -27,7 +27,16 @@ export function ResponsiveNavProvider({ children }: { children: React.ReactNode 
       const l = localStorage.getItem(LS_KEYS.left);
       const r = localStorage.getItem(LS_KEYS.right);
       if (l !== null) setLeftOpen(l === "true");
-      if (r !== null) setRightOpen(r === "true");
+      if (typeof window !== "undefined") {
+        const w = window.innerWidth;
+        if (w >= 1500) {
+          setRightOpen(true);
+        } else if (r !== null) {
+          setRightOpen(r === "true");
+        } else if (w >= 1000) {
+          setRightOpen(false);
+        }
+      }
     } catch {}
   }, []);
 

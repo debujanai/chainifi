@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Loader, User, Building2, Tag, Info } from "lucide-react";
+import { MoreHorizontal, Loader, User, Building2, Tag, Info, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -100,91 +100,88 @@ export function AddressLabelsBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
-              <span className="text-white font-normal">Address Labels</span>
+              <span className="text-white font-normal text-sm">Address Labels</span>
               <Button variant="ghost" size="icon" className="h-5 w-5">
                 <MoreHorizontal className="w-3 h-3 text-gray-400" />
               </Button>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`h-8 text-xs font-normal ${filterOpen ? "bg-[#272936] text-white" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-              onClick={() => setFilterOpen((v) => !v)}
-            >
-              Filters
-            </Button>
-          </div>
         </div>
 
-        {/* Address/Entity Input */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex gap-2">
-            <Button
-              variant={useEntity ? "outline" : "secondary"}
-              size="sm"
-              className={`h-8 text-xs ${useEntity ? "border-[#20222f] text-gray-400 hover:bg-[#20222f]" : "bg-blue-500/20 border-blue-500/50 text-blue-300"}`}
-              onClick={() => setUseEntity(false)}
-            >
-              <User className="w-3 h-3 mr-1" /> Address
-            </Button>
-            <Button
-              variant={useEntity ? "secondary" : "outline"}
-              size="sm"
-              className={`h-8 text-xs ${useEntity ? "bg-purple-500/20 border-purple-500/50 text-purple-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
-              onClick={() => setUseEntity(true)}
-            >
-              <Building2 className="w-3 h-3 mr-1" /> Entity
-            </Button>
-          </div>
-          {!useEntity ? (
-            <Input
-              type="text"
-              placeholder="Enter address (0x...)"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && load()}
-              className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
-            />
-          ) : (
-            <Input
-              type="text"
-              placeholder="Enter entity name"
-              value={entityName}
-              onChange={(e) => setEntityName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && load()}
-              className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
-            />
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal min-w-[100px]">
-                {chain.charAt(0).toUpperCase() + chain.slice(1)}
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Search & Primary Actions */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Input
+                type="text"
+                placeholder={!useEntity ? "0x..." : "Coinbase"}
+                value={!useEntity ? address : entityName}
+                onChange={(e) => !useEntity ? setAddress(e.target.value) : setEntityName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && load()}
+                className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+                onClick={load}
+                disabled={loading}
+              >
+                {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
-              {availableChains.map((c) => (
-                <DropdownMenuItem key={c} onClick={() => { setChain(c); }}>
-                  {c.charAt(0).toUpperCase() + c.slice(1)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-normal"
-            onClick={load}
-            disabled={loading}
-          >
-            {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Load"}
-          </Button>
+            </div>
+
+            {/* Secondary Row: Toggles & Filter Trigger */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
+                <Filter className="w-3 h-3 mr-2" />
+                Filters
+              </Button>
+
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${!useEntity ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setUseEntity(false)}
+                >
+                  Address
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${useEntity ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setUseEntity(true)}
+                >
+                  Entity
+                </Button>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
+                    {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  {availableChains.map((c) => (
+                    <DropdownMenuItem key={c} onClick={() => { setChain(c); }}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -225,22 +222,22 @@ export function AddressLabelsBoard() {
       )}
 
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="py-4 pr-4 pl-0">
           {loading && (
-            <div className="flex items-center justify-center py-6">
+            <div className="flex items-center justify-center py-6 ml-4">
               <Loader className="w-4 h-4 text-blue-400 animate-spin" />
             </div>
           )}
 
           {error && (
-            <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3">
+            <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3 ml-4">
               <span className="text-[10px] text-red-300 font-normal">{error}</span>
             </div>
           )}
 
           {/* Group by Category */}
           {rows.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {["smart_money", "behavioral", "defi", "social", "others"].map((category) => {
                 const categoryLabels = rows.filter((l) => l.category === category);
                 if (categoryLabels.length === 0) return null;
@@ -248,54 +245,84 @@ export function AddressLabelsBoard() {
                 return (
                   <div key={category} className="mb-6">
                     <div className="flex items-center gap-2 mb-3">
-                      <Tag className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium text-white">{getCategoryLabel(category)}</span>
-                      <span className="text-xs text-gray-500">({categoryLabels.length})</span>
+                      <div className="sticky left-0 z-10 bg-[#141723] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-white">{getCategoryLabel(category)}</span>
+                        <span className="text-xs text-gray-500">({categoryLabels.length})</span>
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
+                      {/* Header Row */}
+                      <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                        <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                          <div className="bg-[#141723] flex items-center gap-2 min-w-[140px] ml-0 pl-3 py-2.5 rounded-l border-y border-l border-transparent">
+                            <div className="h-6 w-6" />
+                            <div className="min-w-[100px]">Label</div>
+                          </div>
+                        </div>
+                        <div className="flex-1 flex items-center min-w-0 pr-3 pl-4 py-2.5 border-y border-r border-transparent">
+                          <div className="flex-1 min-w-[200px]">Definition</div>
+                          <div className="min-w-[150px]">Entity</div>
+                          <div className="min-w-[120px]">SM Earned</div>
+                          <div className="w-8"></div>
+                        </div>
+                      </div>
+
+                      {/* Data Rows */}
                       {categoryLabels.map((label, idx) => (
                         <div
                           key={`${label.label}-${idx}`}
-                          className="flex items-start gap-3 px-3 py-3 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                          className="flex items-stretch group whitespace-nowrap"
                         >
-                          {/* Label Badge */}
-                          <div className="flex-shrink-0">
-                            <Badge
-                              variant="secondary"
-                              className={`text-[10px] h-6 px-3 rounded-full ${getCategoryColor(label.category)}`}
-                            >
-                              {label.label}
-                            </Badge>
-                          </div>
-
-                          {/* Definition and Details */}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm text-gray-300 mb-1">{label.definition}</div>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              {label.fullname && (
-                                <div className="flex items-center gap-1">
-                                  <User className="w-3 h-3" />
-                                  <span>{label.fullname}</span>
-                                </div>
-                              )}
-                              {label.smEarnedDate && (
-                                <div className="flex items-center gap-1">
-                                  <Info className="w-3 h-3" />
-                                  <span>SM Earned: {label.smEarnedDate}</span>
-                                </div>
-                              )}
+                          {/* Sticky Column */}
+                          <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                            <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[140px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                              </Button>
+                              <div className="min-w-[100px]">
+                                <Badge
+                                  variant="secondary"
+                                  className={`text-[10px] h-5 px-2 rounded-full whitespace-nowrap ${getCategoryColor(label.category)}`}
+                                >
+                                  {label.label}
+                                </Badge>
+                              </div>
                             </div>
                           </div>
 
-                          {/* Three dots menu */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                          >
-                            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                          </Button>
+                          {/* Main Content */}
+                          <div className="flex-1 flex items-center min-w-0 pr-3 pl-4 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150">
+                            <div className="flex-1 min-w-[200px] text-xs text-gray-300 truncate">
+                              {label.definition}
+                            </div>
+                            <div className="min-w-[150px] text-xs text-gray-400 flex items-center gap-1.5">
+                              {label.fullname ? (
+                                <>
+                                  <User className="w-3 h-3 text-gray-500" />
+                                  <span className="truncate">{label.fullname}</span>
+                                </>
+                              ) : (
+                                <span className="text-gray-600">-</span>
+                              )}
+                            </div>
+                            <div className="min-w-[120px] text-xs text-gray-400 flex items-center gap-1.5">
+                              {label.smEarnedDate ? (
+                                <>
+                                  <Info className="w-3 h-3 text-blue-500/70" />
+                                  <span>{label.smEarnedDate}</span>
+                                </>
+                              ) : (
+                                <span className="text-gray-600">-</span>
+                              )}
+                            </div>
+                            <div className="w-8"></div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -306,7 +333,7 @@ export function AddressLabelsBoard() {
           )}
 
           {!loading && rows.length === 0 && (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12 ml-4">
               <div className="text-center">
                 <Tag className="w-12 h-12 text-gray-600 mx-auto mb-2" />
                 <div className="text-sm text-gray-400">No labels found</div>

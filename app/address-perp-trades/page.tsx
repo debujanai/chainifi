@@ -4,9 +4,11 @@ import { AddressPerpTradesBoard } from "@/components/address-perp-trades-board";
 
 export default function AddressPerpTradesPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <AddressPerpTradesBoard />
+      <div className="flex-1 min-w-0">
+        <AddressPerpTradesBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

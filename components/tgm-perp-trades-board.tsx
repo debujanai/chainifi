@@ -347,22 +347,21 @@ export function TGMPerpTradesBoard() {
               </div>
 
               <div className="space-y-1">
-                {/* Header row */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="min-w-[140px]">Timestamp</div>
-                  <div className="min-w-[200px]">Trader</div>
-                  <div className="min-w-[60px]">Symbol</div>
-                  <div className="min-w-[80px]">Side</div>
-                  <div className="min-w-[80px]">Action</div>
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="min-w-[100px] text-right">Token Amount</div>
-                    <div className="min-w-[100px] text-right">Price USD</div>
-                    <div className="min-w-[100px] text-right">Value USD</div>
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[380px] ml-0 pl-3 py-2 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="w-[140px] flex-shrink-0">Timestamp</div>
+                    <div className="w-[220px] flex-shrink-0">Trader</div>
                   </div>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="min-w-[80px]">Order Type</div>
-                    <div className="min-w-[200px]">Transaction</div>
+                  <div className="w-[60px] flex-shrink-0">Symbol</div>
+                  <div className="w-[80px] flex-shrink-0">Side</div>
+                  <div className="w-[80px] flex-shrink-0">Action</div>
+                  <div className="flex items-center gap-4 ml-auto min-w-0">
+                    <div className="w-[100px] text-right flex-shrink-0">Token Amount</div>
+                    <div className="w-[100px] text-right flex-shrink-0">Price USD</div>
+                    <div className="w-[100px] text-right flex-shrink-0">Value USD</div>
+                    <div className="w-[80px] flex-shrink-0 text-right">Order Type</div>
+                    <div className="w-[200px] flex-shrink-0 text-right">Transaction</div>
                   </div>
                 </div>
                 {data.map((item, idx) => {
@@ -371,38 +370,39 @@ export function TGMPerpTradesBoard() {
                   return (
                     <div
                       key={`${item.transaction_hash}-${idx}`}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                      className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group"
                     >
-                      {/* Three dots menu */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                      </Button>
-
-                      {/* Timestamp */}
-                      <div className="text-xs text-gray-300 font-medium min-w-[140px]">
-                        {new Date(item.block_timestamp).toLocaleString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </div>
-
-                      {/* Trader */}
-                      <div className="min-w-[200px]">
-                        <div className="font-mono text-xs text-gray-400">
-                          {item.trader_address.slice(0, 6)}...{item.trader_address.slice(-4)}
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] h-4 bg-gray-700/50 text-gray-300 border-0 px-1.5 rounded-full mt-0.5"
+                      <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[380px] pr-3 ml-0 pl-3 py-2.5 rounded-l">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          {item.trader_address_label || "Unknown"}
-                        </Badge>
+                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <div className="text-xs text-gray-300 font-medium w-[140px]">
+                          {new Date(item.block_timestamp).toLocaleString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                        <div className="w-[220px] flex-shrink-0">
+                          <div className="flex items-center gap-2">
+                            <div className="font-mono text-xs text-gray-400">
+                              {item.trader_address.slice(0, 6)}...{item.trader_address.slice(-4)}
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-4 bg-gray-700/50 text-gray-300 border-0 px-1.5 rounded-full whitespace-nowrap"
+                            >
+                              <span className="truncate max-w-[140px]">
+                                {item.trader_address_label || "Unknown"}
+                              </span>
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Symbol */}
@@ -434,21 +434,18 @@ export function TGMPerpTradesBoard() {
                         </Badge>
                       </div>
 
-                      {/* Metrics */}
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="text-right min-w-[100px]">
+                      {/* Metrics + Type + Tx (right aligned) */}
+                      <div className="flex items-center gap-4 ml-auto min-w-0">
+                        <div className="text-right w-[100px] flex-shrink-0">
                           <div className="text-xs font-medium text-gray-300">{formatNumber(item.token_amount)}</div>
                         </div>
-                        <div className="text-right min-w-[100px]">
+                        <div className="text-right w-[100px] flex-shrink-0">
                           <div className="text-xs font-medium text-gray-300">{formatUSD(item.price_usd)}</div>
                         </div>
-                        <div className="text-right min-w-[100px]">
+                        <div className="text-right w-[100px] flex-shrink-0">
                           <div className="text-xs font-semibold text-gray-300">{formatUSD(item.value_usd)}</div>
                         </div>
-                      </div>
-                      {/* Additional Info */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
-                        <div className="min-w-[80px]">
+                        <div className="w-[80px] flex-shrink-0 text-right">
                           <Badge
                             variant="secondary"
                             className="text-[10px] h-5 border-0 px-2 rounded-full bg-yellow-500/20 text-yellow-300"
@@ -456,7 +453,7 @@ export function TGMPerpTradesBoard() {
                             {item.type}
                           </Badge>
                         </div>
-                        <div className="min-w-[200px]">
+                        <div className="w-[200px] flex-shrink-0 text-right">
                           <div className="font-mono text-xs text-gray-500">
                             {item.transaction_hash.slice(0, 10)}...{item.transaction_hash.slice(-8)}
                           </div>

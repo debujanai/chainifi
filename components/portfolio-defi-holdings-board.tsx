@@ -107,7 +107,7 @@ export function PortfolioDefiHoldingsBoard() {
           {data && data.protocols.map((protocol, protocolIdx) => (
             <div key={`${protocol.protocol_name}-${protocol.chain}-${protocolIdx}`} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center bg-blue-500/20">
                     <Wallet className="w-3 h-3 text-blue-400" />
                   </div>
@@ -125,10 +125,11 @@ export function PortfolioDefiHoldingsBoard() {
               </div>
 
               <div className="space-y-1">
-                {/* Header row to explain columns */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="min-w-[60px]">Symbol</div>
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[120px] ml-0 pl-3 py-2 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="min-w-[60px]">Symbol</div>
+                  </div>
                   <div className="flex-1">Token</div>
                   <div className="min-w-[120px]">Position Type</div>
                   <div className="flex items-center gap-4 min-w-0">
@@ -144,20 +145,19 @@ export function PortfolioDefiHoldingsBoard() {
                 {protocol.tokens.map((token, tokenIdx) => (
                   <div
                     key={`${token.address}-${tokenIdx}`}
-                    className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                    className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group"
                   >
-                    {/* Three dots menu */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                    </Button>
-
-                    {/* Token Symbol (like Task ID) */}
-                    <div className="font-mono text-xs text-gray-400 min-w-[60px]">
-                      {token.symbol}
+                    <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[120px] pr-3 ml-0 pl-3 py-2.5 rounded-l">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                      </Button>
+                      <div className="font-mono text-xs text-gray-400 min-w-[60px]">
+                        {token.symbol}
+                      </div>
                     </div>
 
                     {/* Token Name (like Task Title) */}
@@ -197,7 +197,7 @@ export function PortfolioDefiHoldingsBoard() {
                     </div>
 
                     {/* Additional Info */}
-                    <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                    <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
                       <div className="min-w-[100px] text-right">
                         <div className="text-gray-300 font-medium">{formatUSD(protocol.total_assets_usd)}</div>
                       </div>

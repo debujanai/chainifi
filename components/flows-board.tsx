@@ -173,7 +173,7 @@ export function FlowsBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
@@ -184,7 +184,7 @@ export function FlowsBoard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:flex-nowrap">
             <Button
               variant="ghost"
               size="sm"
@@ -232,14 +232,14 @@ export function FlowsBoard() {
         </div>
 
         {/* Token Address Input */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2 w-full">
           <Input
             type="text"
             placeholder="Enter token address (0x...)"
             value={tokenAddress}
             onChange={(e) => setTokenAddress(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && load()}
-            className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
+            className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500 w-full"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -365,6 +365,7 @@ export function FlowsBoard() {
 
       <ScrollArea className="flex-1">
         <div className="p-4">
+          <div className="min-w-full">
           {loading && (
             <div className="flex items-center justify-center py-6">
               <Loader className="w-4 h-4 text-blue-400 animate-spin" />
@@ -380,7 +381,7 @@ export function FlowsBoard() {
           {sections.map((section) => (
             <div key={section.section} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 rounded-l flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center bg-blue-500/20">
                     <Calendar className="w-3 h-3 text-blue-400" />
                   </div>
@@ -398,19 +399,20 @@ export function FlowsBoard() {
               </div>
 
               <div className="space-y-1">
-                {/* Header row to explain columns */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="min-w-[100px]">Date</div>
-                  <div className="flex items-center gap-4 min-w-0">
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500 md:whitespace-nowrap">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[140px] ml-0 pl-3 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="min-w-[100px]">Date</div>
+                  </div>
+                  <div className="flex items-center gap-4 ml-auto min-w-0">
                     <div className="min-w-[80px] text-right">Price</div>
                     <div className="min-w-[100px] text-right">Token Amount</div>
                     <div className="min-w-[80px] text-right">Value USD</div>
-                  </div>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="min-w-[60px] text-right">Holders</div>
-                    <div className="min-w-[80px] text-right">Inflows</div>
-                    <div className="min-w-[80px] text-right">Outflows</div>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="min-w-[60px] text-right">Holders</div>
+                      <div className="min-w-[80px] text-right">Inflows</div>
+                      <div className="min-w-[80px] text-right">Outflows</div>
+                    </div>
                   </div>
                 </div>
                 {section.items.map((flow, idx) => {
@@ -420,56 +422,42 @@ export function FlowsBoard() {
                   return (
                     <div
                       key={`${flow.date}-${idx}`}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                      className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group md:whitespace-nowrap"
                     >
-                      {/* Three dots menu */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                      </Button>
-
-                      {/* Date */}
-                      <div className="text-xs text-gray-300 font-medium min-w-[100px]">
-                        {new Date(flow.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[140px] pr-3 ml-0 pl-3 rounded-l">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <div className="text-xs text-gray-300 font-medium min-w-[100px]">
+                          {new Date(flow.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
                       </div>
 
-                      {/* Price, Token Amount, Value */}
-                      <div className="flex items-center gap-4 min-w-0">
+                      {/* Right-aligned metrics and counts */}
+                      <div className="flex items-center gap-4 ml-auto min-w-0">
                         <div className="text-right min-w-[80px]">
-                          <div className="text-[10px] text-gray-500">Price</div>
-                          <div className="text-xs font-semibold text-gray-300">
-                            {formatUSD(flow.price_usd)}
-                          </div>
+                          <div className="text-xs font-semibold text-gray-300">{formatUSD(flow.price_usd)}</div>
                         </div>
                         <div className="text-right min-w-[100px]">
-                          <div className="text-[10px] text-gray-500">Token Amount</div>
-                          <div className="text-xs font-medium text-gray-300">
-                            {formatNumber(flow.token_amount)}
-                          </div>
+                          <div className="text-xs font-medium text-gray-300">{formatNumber(flow.token_amount)}</div>
                         </div>
                         <div className="text-right min-w-[80px]">
-                          <div className="text-[10px] text-gray-500">Value USD</div>
-                          <div className="text-xs font-semibold text-gray-300">
-                            {formatUSD(flow.value_usd)}
+                          <div className="text-xs font-semibold text-gray-300">{formatUSD(flow.value_usd)}</div>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                          <div className="min-w-[60px] text-right">
+                            <div className="text-gray-300 font-medium">{flow.holders_count}</div>
                           </div>
-                        </div>
-                      </div>
-
-                      {/* Holders, Inflows, Outflows */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
-                        <div className="min-w-[60px] text-right">
-                          <div className="text-gray-300 font-medium">{flow.holders_count}</div>
-                        </div>
-                        <div className="min-w-[80px] text-right">
-                          <div className="text-green-400 font-medium">{flow.total_inflows_count}</div>
-                          <div className="text-[10px] text-gray-500">inflows</div>
-                        </div>
-                        <div className="min-w-[80px] text-right">
-                          <div className="text-red-400 font-medium">{flow.total_outflows_count}</div>
-                          <div className="text-[10px] text-gray-500">outflows</div>
+                          <div className="min-w-[80px] text-right">
+                            <div className="text-green-400 font-medium">{flow.total_inflows_count}</div>
+                          </div>
+                          <div className="min-w-[80px] text-right">
+                            <div className="text-red-400 font-medium">{flow.total_outflows_count}</div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -516,6 +504,7 @@ export function FlowsBoard() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </ScrollArea>
     </div>

@@ -550,12 +550,12 @@ export function PerpScreenerBoard() {
                         )}
                       </div>
                       {/* Additional Info */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
                         <div className="min-w-[100px] text-right">
                           <div className="text-gray-300 font-medium">{formatUSD(item.open_interest)}</div>
                         </div>
                         <div className="min-w-[80px] text-right">
-                          <div className={`text-gray-300 font-medium ${item.funding >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          <div className={`text-gray-300 font-medium ${item.funding >= 0 ? "text-green-400" : "text-red-400"}`}> 
                             {formatPercent(item.funding)}
                           </div>
                         </div>

@@ -4,9 +4,11 @@ import { TGMPerpTradesBoard } from "@/components/tgm-perp-trades-board";
 
 export default function TGMPerpTradesPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <TGMPerpTradesBoard />
+      <div className="flex-1 min-w-0">
+        <TGMPerpTradesBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

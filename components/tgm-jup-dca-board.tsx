@@ -351,9 +351,11 @@ export function TGMJupDcaBoard() {
 
           {rows.length > 0 && (
             <div className="space-y-1">
-              <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                <div className="h-6 w-6" />
-                <div className="min-w-[140px]">Since</div>
+              <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[180px] ml-0 pl-3 py-2 rounded-l">
+                  <div className="h-6 w-6" />
+                  <div className="min-w-[140px]">Since</div>
+                </div>
                 <div className="min-w-[140px]">Last</div>
                 <div className="min-w-[200px]">Trader</div>
                 <div className="min-w-[200px]">Vault</div>
@@ -372,20 +374,21 @@ export function TGMJupDcaBoard() {
                 return (
                   <div
                     key={`${item.creation_hash}-${index}`}
-                    className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group w-full"
+                    className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group w-full"
                   >
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                    </Button>
-
-                    <div className="min-w-[140px] text-xs text-gray-300 font-medium">
-                      {new Date(item.since_timestamp).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[180px] pr-3 ml-0 pl-3 py-2.5 rounded-l">
+                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                      </Button>
+                      <div className="min-w-[140px] text-xs text-gray-300 font-medium">
+                        {new Date(item.since_timestamp).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
                     </div>
 
                     <div className="min-w-[140px] text-xs text-gray-300 font-medium">

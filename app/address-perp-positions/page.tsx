@@ -4,9 +4,11 @@ import { AddressPerpPositionsBoard } from "@/components/address-perp-positions-b
 
 export default function AddressPerpPositionsPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <AddressPerpPositionsBoard />
+      <div className="flex-1 min-w-0">
+        <AddressPerpPositionsBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

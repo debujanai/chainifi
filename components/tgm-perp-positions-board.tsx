@@ -331,8 +331,8 @@ export function TGMPerpPositionsBoard() {
                 {/* Header row */}
                 <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
                   <div className="h-6 w-6" />
-                  <div className="min-w-[60px]">Address</div>
-                  <div className="flex-1">Label</div>
+                  <div className="w-[200px] flex-shrink-0">Address</div>
+                  <div className="w-[160px] flex-shrink-0">Label</div>
                   <div className="min-w-[80px]">Side</div>
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="min-w-[100px] text-right">Position Value</div>
@@ -366,12 +366,12 @@ export function TGMPerpPositionsBoard() {
                       </Button>
 
                       {/* Address */}
-                      <div className="font-mono text-xs text-gray-400 min-w-[60px]">
+                      <div className="font-mono text-xs text-gray-400 w-[200px] flex-shrink-0">
                         {item.address.slice(0, 6)}...{item.address.slice(-4)}
                       </div>
 
                       {/* Label */}
-                      <div className="flex-1 text-sm text-white font-medium min-w-0">
+                      <div className="w-[160px] flex-shrink-0 text-sm text-white font-medium">
                         <Badge
                           variant="secondary"
                           className="text-[10px] h-4 bg-gray-700/50 text-gray-300 border-0 px-1.5 rounded-full"
@@ -414,7 +414,7 @@ export function TGMPerpPositionsBoard() {
                         </div>
                       </div>
                       {/* Additional Info */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
                         <div className="min-w-[100px] text-right">
                           <div className={`text-xs font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}>
                             {isPositive ? <TrendingUp className="w-3 h-3 inline" /> : <TrendingDown className="w-3 h-3 inline" />}

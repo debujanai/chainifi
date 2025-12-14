@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ResponsiveNavProvider } from '@/components/responsive-nav-context';
 import { Topbar } from '@/components/topbar';
 import { MobileOverlay } from '@/components/mobile-overlay';
+import { RightToggle } from '@/components/right-toggle';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -27,7 +28,8 @@ export default function RootLayout({
         <ResponsiveNavProvider>
           <Topbar />
           <MobileOverlay />
-          <div className="md:pt-0 pt-14">{children}</div>
+          <RightToggle />
+          <div className="lg:pt-0 pt-14">{children}</div>
         </ResponsiveNavProvider>
       </body>
     </html>

@@ -4,9 +4,11 @@ import { PerpScreenerBoard } from "@/components/perp-screener-board";
 
 export default function PerpScreenerPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <PerpScreenerBoard />
+      <div className="flex-1 min-w-0">
+        <PerpScreenerBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

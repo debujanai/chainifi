@@ -72,8 +72,8 @@ export function PerpTradesBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-2">
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:flex-nowrap">
             <div className="w-5 h-5 bg-emerald-500 rounded flex items-center justify-center text-[10px]">
               <DollarSign className="w-3 h-3 text-white" />
             </div>
@@ -191,6 +191,7 @@ export function PerpTradesBoard() {
 
       <ScrollArea className="flex-1">
         <div className="p-4">
+          <div className="min-w-full">
           {loading && (
             <div className="flex items-center gap-2 p-2 rounded bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-30 mb-3">
               <span className="text-[10px] text-blue-300 font-normal">Loading perp trades…</span>
@@ -202,51 +203,57 @@ export function PerpTradesBoard() {
             </div>
           )}
 
-          {/* Header row */}
-          <div className="grid grid-cols-[24px,160px,80px,60px,80px,100px,100px,100px,80px,180px,1fr] gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-            <div />
-            <div>Trader</div>
-            <div>Coin</div>
-            <div>Side</div>
-            <div>Action</div>
-            <div className="text-right">Amount</div>
-            <div className="text-right">Price</div>
-            <div className="text-right">Value</div>
-            <div>Type</div>
-            <div>Time</div>
-            <div className="text-right pr-2">Tx Hash · Actions</div>
+          <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500 md:whitespace-nowrap">
+            <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-2 min-w-[146px] ml-0 pl-3 pr-2 rounded-l">
+              <div className="h-6 w-6" />
+              <div className="flex-1 min-w-0 truncate">Trader</div>
+            </div>
+            <div className="flex-1 flex items-center gap-1.5 justify-end min-w-0">
+              <div className="min-w-[64px]">Coin</div>
+              <div className="min-w-[64px]">Side</div>
+              <div className="min-w-[72px]">Action</div>
+              <div className="text-right min-w-[80px]">Amount</div>
+              <div className="text-right min-w-[90px]">Price</div>
+              <div className="text-right min-w-[90px]">Value</div>
+              <div className="min-w-[70px]">Type</div>
+              <div className="min-w-[160px]">Time</div>
+              <div className="text-right min-w-[160px] pr-2">Tx Hash · Actions</div>
+            </div>
           </div>
 
           <div className="space-y-1">
             {trades.map((t, idx) => (
-              <div key={`${t.transaction_hash}-${idx}`} className="grid grid-cols-[24px,160px,80px,60px,80px,100px,100px,100px,80px,180px,1fr] items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group">
-                <div>
+              <div key={`${t.transaction_hash}-${idx}`} className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group md:whitespace-nowrap">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[146px] pr-2 ml-0 pl-3 rounded-l">
                   <div className="h-6 w-6 rounded bg-[#20222f] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <MoreHorizontal className="w-4 h-4 text-gray-400" />
                   </div>
+                  <div className="text-xs text-gray-300 min-w-0">
+                    <div className="font-medium text-white truncate">{t.trader_address_label || "Smart Money"}</div>
+                    <div className="text-[10px] text-gray-500 font-mono truncate">{t.trader_address}</div>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-300">
-                  <div className="font-medium text-white">{t.trader_address_label || "Smart Money"}</div>
-                  <div className="text-[10px] text-gray-500 font-mono">{t.trader_address}</div>
-                </div>
-                <div className="text-xs text-white font-medium">{t.token_symbol}</div>
-                <div>
-                  <Badge variant="secondary" className={`text-[10px] h-5 px-2 rounded-full ${t.side === "Long" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}>{t.side}</Badge>
-                </div>
-                <div className="text-xs text-gray-300">{t.action}</div>
-                <div className="text-right text-xs text-white">{t.token_amount}</div>
-                <div className="text-right text-xs text-gray-300">{formatUSD(t.price_usd)}</div>
-                <div className="text-right text-xs text-white font-medium">{formatUSD(t.value_usd)}</div>
-                <div className="text-xs text-gray-300">{t.type}</div>
-                <div className="text-xs text-gray-300 flex items-center gap-1"><Clock className="w-3 h-3 text-gray-500" /> {new Date(t.block_timestamp).toLocaleString()}</div>
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-xs text-gray-500 font-mono truncate max-w-[220px]">{t.transaction_hash}</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => navigator.clipboard?.writeText?.(t.transaction_hash)}>
-                    <Copy className="w-3 h-3 text-gray-400" />
-                  </Button>
+                <div className="flex-1 flex items-center gap-1.5 justify-end min-w-0">
+                  <div className="text-xs text-white font-medium min-w-[64px]">{t.token_symbol}</div>
+                  <div className="min-w-[64px]">
+                    <Badge variant="secondary" className={`text-[10px] h-5 px-2 rounded-full ${t.side === "Long" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}>{t.side}</Badge>
+                  </div>
+                  <div className="text-xs text-gray-300 min-w-[72px]">{t.action}</div>
+                  <div className="text-right text-xs text-white min-w-[80px]">{t.token_amount}</div>
+                  <div className="text-right text-xs text-gray-300 min-w-[90px]">{formatUSD(t.price_usd)}</div>
+                  <div className="text-right text-xs text-white font-medium min-w-[90px]">{formatUSD(t.value_usd)}</div>
+                  <div className="text-xs text-gray-300 min-w-[70px]">{t.type}</div>
+                  <div className="text-xs text-gray-300 flex items-center gap-1 min-w-[160px]"><Clock className="w-3 h-3 text-gray-500" /> {new Date(t.block_timestamp).toLocaleString()}</div>
+                  <div className="flex items-center justify-end gap-1.5 min-w-[160px]">
+                    <span className="text-xs text-gray-500 font-mono truncate max-w-[160px]">{t.transaction_hash}</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => navigator.clipboard?.writeText?.(t.transaction_hash)}>
+                      <Copy className="w-3 h-3 text-gray-400" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </div>
       </ScrollArea>

@@ -4,9 +4,11 @@ import { AddressLabelsBoard } from "@/components/address-labels-board";
 
 export default function AddressLabelsPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#141723]">
+    <div className="flex min-h-screen bg-[#141723]">
       <Sidebar />
-      <AddressLabelsBoard />
+      <div className="flex-1 min-w-0">
+        <AddressLabelsBoard />
+      </div>
       <PropertiesPanel />
     </div>
   );

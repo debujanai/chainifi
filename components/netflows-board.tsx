@@ -136,7 +136,7 @@ export function NetflowsBoard() {
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
@@ -147,7 +147,7 @@ export function NetflowsBoard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:flex-nowrap">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -289,6 +289,7 @@ export function NetflowsBoard() {
 
       <ScrollArea className="flex-1">
         <div className="p-4">
+          <div className="min-w-full relative">
           {loading && (
             <div className="flex items-center justify-center py-6">
               <Loader className="w-4 h-4 text-blue-400 animate-spin" />
@@ -304,7 +305,7 @@ export function NetflowsBoard() {
           {sections.map((section) => (
             <div key={section.section} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
+                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 rounded-l flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
                     backgroundColor: section.section.toLowerCase() === "solana" ? "#14b8a6" : 
                                      section.section.toLowerCase() === "buying" ? "#22c55e" : 
@@ -336,9 +337,11 @@ export function NetflowsBoard() {
 
               <div className="space-y-1">
                 {/* Header row to explain columns */}
-                <div className="flex items-center gap-3 px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  <div className="h-6 w-6" />
-                  <div className="min-w-[60px]">Symbol</div>
+                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[90px] ml-0 pl-3 rounded-l">
+                    <div className="h-6 w-6" />
+                    <div className="min-w-[60px]">Symbol</div>
+                  </div>
                   <div className="flex-1">Token</div>
                   <div className="min-w-[120px]">Sectors</div>
                   <div className="flex items-center gap-4 min-w-0">
@@ -361,23 +364,21 @@ export function NetflowsBoard() {
                   return (
                     <div
                       key={`${item.chain}-${item.token_address}`}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] transition-colors group"
+                      className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group whitespace-nowrap"
                     >
-                      {/* Three dots menu */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                      </Button>
-
-                      {/* Token Symbol (like Task ID) */}
-                      <div className="font-mono text-xs text-gray-400 min-w-[60px]">
-                        {item.token_symbol}
+                      <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[110px] pr-3 ml-0 pl-3 rounded-l">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <div className="font-mono text-xs text-gray-400">
+                          {item.token_symbol}
+                        </div>
                       </div>
 
-                      {/* Token Name (like Task Title) */}
                       <div className="flex-1 text-sm text-white font-medium min-w-0">
                         {item.token_symbol}
                         {groupBy !== "chain" && (
@@ -388,7 +389,7 @@ export function NetflowsBoard() {
                       </div>
 
                       {/* Sectors (like Tags) */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-[140px] flex-shrink-0">
                         {item.token_sectors && item.token_sectors.length > 0 ? (
                           item.token_sectors.slice(0, 3).map((sector, sectorIdx) => (
                             <Badge 
@@ -413,30 +414,20 @@ export function NetflowsBoard() {
                       {/* Flow Values */}
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="text-right min-w-[70px]">
-                          <div className="text-[10px] text-gray-500">24h</div>
-                          <div className={`text-xs font-medium ${flow24h >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {formatUSD(flow24h)}
-                          </div>
+                          <div className={`text-xs font-medium ${flow24h >= 0 ? "text-green-400" : "text-red-400"}`}>{formatUSD(flow24h)}</div>
                         </div>
                         <div className="text-right min-w-[70px]">
-                          <div className="text-[10px] text-gray-500">7d</div>
-                          <div className={`text-xs font-semibold ${flow7d >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {formatUSD(flow7d)}
-                          </div>
+                          <div className={`text-xs font-semibold ${flow7d >= 0 ? "text-green-400" : "text-red-400"}`}>{formatUSD(flow7d)}</div>
                         </div>
                         <div className="text-right min-w-[70px]">
-                          <div className="text-[10px] text-gray-500">30d</div>
-                          <div className={`text-xs font-medium ${flow30d >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {formatUSD(flow30d)}
-                          </div>
+                          <div className={`text-xs font-medium ${flow30d >= 0 ? "text-green-400" : "text-red-400"}`}>{formatUSD(flow30d)}</div>
                         </div>
                       </div>
 
                       {/* Additional Info */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0">
+                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
                         <div className="min-w-[50px]">
-                          <span className="text-gray-500">{item.trader_count}</span>
-                          <span className="text-gray-600 ml-1">traders</span>
+                          <span className="text-gray-300 font-medium">{item.trader_count}</span>
                         </div>
                         <div className="min-w-[50px]">
                           {item.token_age_days}d
@@ -451,6 +442,7 @@ export function NetflowsBoard() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       </ScrollArea>
     </div>
