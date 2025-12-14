@@ -13,6 +13,18 @@ The following components have been updated to follow this guide:
 - ✅ `address-historical-balances-board.tsx`
 - ✅ `hyperliquid-leaderboard-board.tsx`
 - ✅ `token-screener-board.tsx`
+- ✅ `holders-board.tsx`
+- ✅ `flows-board.tsx`
+- ✅ `who-bought-sold-board.tsx`
+- ✅ `tgm-dex-trades-board.tsx`
+- ✅ `tgm-transfers-board.tsx`
+- ✅ `tgm-jup-dca-board.tsx`
+- ✅ `tgm-pnl-leaderboard-board.tsx`
+- ✅ `perp-screener-board.tsx`
+- ✅ `tgm-perp-pnl-leaderboard-board.tsx`
+- ✅ `tgm-perp-positions-board.tsx`
+- ✅ `tgm-perp-trades-board.tsx`
+- ✅ `portfolio-defi-holdings-board.tsx`
 
 ## Pending Components
 
@@ -137,14 +149,16 @@ Components that still need to be aligned:
 **Row 1 (12 columns total):**
 - Date From: 2 cols
 - Date To: 2 cols
-- Action Toggle: 3 cols
-- Size Range: 2 cols
-- Per Page: 1 col
-- Apply: 2 cols
+- Smart Money: 2 cols
+- Liq Range: 2 cols
+- Vol Range: 2 cols
+- Per Page: 2 cols
 
 **Row 2 (12 columns total):**
-- Value USD Range: 6 cols
-- Closed PnL Range: 6 cols
+- MCap Range: 3 cols
+- Netflow Range: 3 cols
+- Age Range: 2 cols
+- Category Buttons: 4 cols
 
 ---
 
@@ -205,6 +219,45 @@ Use this pattern for grouped toggle buttons (like Address/Entity, Long/Short):
   />
 </div>
 ```
+
+### Date Picker (Popover + Calendar)
+
+**Required Imports:**
+```tsx
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Calendar } from "lucide-react";
+import { format } from "date-fns";
+```
+
+**Implementation:**
+```tsx
+<Popover>
+  <PopoverTrigger asChild>
+    <Button
+      variant="outline"
+      className="w-full h-8 justify-start text-left font-normal bg-[#171a26] border-[#20222f] text-gray-300 text-xs"
+    >
+      <Calendar className="mr-2 h-3 w-3 text-gray-500" />
+      {dateValue ? format(new Date(dateValue), "MMM dd, yyyy") : <span className="text-gray-500">Pick a date</span>}
+    </Button>
+  </PopoverTrigger>
+  <PopoverContent className="w-auto p-0 bg-[#171a26] border-[#20222f]" align="start">
+    <CalendarComponent
+      mode="single"
+      selected={dateValue ? new Date(dateValue) : undefined}
+      onSelect={(d) => d && setDateValue(d.toISOString())}
+      initialFocus
+    />
+  </PopoverContent>
+</Popover>
+```
+
+**Key Styles:**
+- Trigger button: `w-full h-8 justify-start text-left font-normal bg-[#171a26] border-[#20222f] text-gray-300 text-xs`
+- Calendar icon: `mr-2 h-3 w-3 text-gray-500`
+- Placeholder text: `text-gray-500`
+- PopoverContent: `w-auto p-0 bg-[#171a26] border-[#20222f]`
 
 ---
 
@@ -356,6 +409,25 @@ Use this pattern for grouped toggle buttons (like Address/Entity, Long/Short):
 | Data Cell | `text-xs text-gray-300` |
 | Numeric Values | `font-mono tabular-nums` |
 | Bold Values | `font-semibold` |
+| **Data Types** | |
+| Symbol Name | `text-blue-300` |
+| Main Price | `text-white` |
+| Liquidity/Bought | `text-yellow-300/80` |
+| Volume/Holding | `text-blue-300/80` |
+| Positive Value | `text-green-400` |
+| Negative Value | `text-red-400` |
+
+### Column Usage Reference
+
+| Data Type | Classes | Usage |
+|-----------|---------|-------|
+| **Symbol/Name** | `text-xs text-blue-300 font-medium` | Used in the sticky left column for main identifier |
+| **Main Price** | `text-xs text-white font-mono tabular-nums` | Primary price display, white for visibility |
+| **Change/PnL** | `text-xs font-semibold font-mono tabular-nums` | Always colored: Green (`text-green-400`) or Red (`text-red-400`) |
+| **Liquidity/Bought**| `text-xs text-yellow-300/80 font-mono tabular-nums` | Secondary metrics often related to depth or entry |
+| **Volume/Holding** | `text-xs text-blue-300/80 font-mono tabular-nums` | Secondary metrics often related to activity or current position |
+| **Standard Metric** | `text-xs text-gray-300 font-mono tabular-nums` | Default for other numeric data (MCap, etc.) |
+| **Meta/Age** | `text-xs text-gray-400 font-mono tabular-nums` | Low emphasis data (Age, Dates) |
 
 ---
 
@@ -437,13 +509,14 @@ Use this pattern for grouped toggle buttons (like Address/Entity, Long/Short):
 - [ ] Toggle containers with bordered style
 - [ ] Sort dropdown with ghost button style
 - [ ] Mobile filter toggle (lg:hidden)
-- [ ] Filter grid with 12-column layout
+- [ ] Filter grid with 12-column layout (fully utilized)
 - [ ] Balanced row distribution (all rows should total 12 cols)
+- [ ] **Date pickers using Popover + CalendarComponent (not native input)**
 - [ ] Apply button in filter grid
 - [ ] Sticky first column in table
 - [ ] Right-aligned data columns with center text
 - [ ] Fixed column widths matching header and data
-- [ ] Consistent color palette
-- [ ] Hover states on rows
+- [ ] Consistent color palette (Column Usage Reference)
+- [ ] Hover states on rows (`bg-[#1c1e2b]`)
 - [ ] **Pagination OUTSIDE ScrollArea (fixed at bottom)**
 

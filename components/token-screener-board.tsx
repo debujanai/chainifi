@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Plus, Loader, Filter, TrendingUp, TrendingDown } from "lucide-react";
+import { MoreHorizontal, Plus, Loader, Filter, TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { TokenScreenerData, TokenScreenerResponse, TokenScreenerFilters, fetchTokenScreener } from "@/lib/nansen-api";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 function formatUSD(value: number): string {
     if (value >= 1000000000) {
@@ -289,25 +292,49 @@ export function TokenScreenerBoard() {
                     <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
                         {/* Row 1: Date range, Smart Money, Liq, Vol, Per Page = 12 cols */}
                         {/* Date Range - From */}
-                        <div className="lg:col-span-2">
-                            <Input
-                                type="date"
-                                placeholder="From"
-                                value={from}
-                                onChange={(e) => setFrom(e.target.value)}
-                                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white w-full"
-                            />
+                        <div className="sm:col-span-1 lg:col-span-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full h-8 justify-start text-left font-normal bg-[#171a26] border-[#20222f] text-gray-300 text-xs"
+                                    >
+                                        <Calendar className="mr-2 h-3 w-3 text-gray-500" />
+                                        {from ? format(new Date(from), "MMM dd, yyyy") : <span className="text-gray-500">From date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 bg-[#171a26] border-[#20222f]" align="start">
+                                    <CalendarComponent
+                                        mode="single"
+                                        selected={from ? new Date(from) : undefined}
+                                        onSelect={(d) => d && setFrom(d.toISOString())}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
 
                         {/* Date Range - To */}
-                        <div className="lg:col-span-2">
-                            <Input
-                                type="date"
-                                placeholder="To"
-                                value={to}
-                                onChange={(e) => setTo(e.target.value)}
-                                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white w-full"
-                            />
+                        <div className="sm:col-span-1 lg:col-span-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full h-8 justify-start text-left font-normal bg-[#171a26] border-[#20222f] text-gray-300 text-xs"
+                                    >
+                                        <Calendar className="mr-2 h-3 w-3 text-gray-500" />
+                                        {to ? format(new Date(to), "MMM dd, yyyy") : <span className="text-gray-500">To date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 bg-[#171a26] border-[#20222f]" align="start">
+                                    <CalendarComponent
+                                        mode="single"
+                                        selected={to ? new Date(to) : undefined}
+                                        onSelect={(d) => d && setTo(d.toISOString())}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
 
                         {/* Smart Money Toggle */}
