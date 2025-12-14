@@ -25,6 +25,12 @@ The following components have been updated to follow this guide:
 - ✅ `tgm-perp-positions-board.tsx`
 - ✅ `tgm-perp-trades-board.tsx`
 - ✅ `portfolio-defi-holdings-board.tsx`
+- ✅ `netflows-board.tsx`
+- ✅ `historical-holdings-board.tsx`
+- ✅ `dex-trades-board.tsx`
+- ✅ `perp-trades-board.tsx`
+- ✅ `dcas-board.tsx`
+- ✅ `holdings-board.tsx`
 
 ## Pending Components
 
@@ -54,19 +60,31 @@ Components that still need to be aligned:
 </div>
 ```
 
-### Search Input Row
+### Controls Row with Primary Toggle on Left (Preferred Pattern)
+This is the **preferred pattern** for most board components. Primary toggles (chains, side, etc.) go on the left in a pill container, actions go on the right.
+
 ```tsx
 <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
-  {/* Search Input */}
-  <div className="flex items-center gap-2 flex-1 min-w-0">
-    <Input
-      type="text"
-      placeholder="0x..."
-      className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
-    />
+  {/* Primary Toggle Container (Left) - Chains, Side, etc. */}
+  <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+    {["ethereum", "solana"].map((chain) => (
+      <Button
+        key={chain}
+        variant="ghost"
+        size="sm"
+        className={`h-7 text-[10px] px-3 rounded-sm ${
+          selectedChains[chain] 
+            ? "bg-[#20222f] text-gray-200 shadow-sm" 
+            : "text-gray-400 hover:text-gray-200"
+        }`}
+        onClick={() => setSelectedChains((prev) => ({ ...prev, [chain]: !prev[chain] }))}
+      >
+        {chain.charAt(0).toUpperCase() + chain.slice(1)}
+      </Button>
+    ))}
   </div>
 
-  {/* Action Buttons */}
+  {/* Action Buttons (Right) */}
   <div className="flex items-center gap-2 flex-wrap">
     {/* Refresh Button */}
     <Button
@@ -87,24 +105,6 @@ Components that still need to be aligned:
       Filters
     </Button>
 
-    {/* Toggle Container (like Address/Entity) */}
-    <div className="hidden lg:flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 text-[10px] px-3 rounded-sm bg-[#20222f] text-gray-200 shadow-sm"
-      >
-        Option1
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 text-[10px] px-3 rounded-sm text-gray-400 hover:text-gray-200"
-      >
-        Option2
-      </Button>
-    </div>
-
     {/* Sort Dropdown */}
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -116,13 +116,61 @@ Components that still need to be aligned:
         {/* Dropdown items */}
       </DropdownMenuContent>
     </DropdownMenu>
+
+    {/* Optional: Group Dropdown */}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+          Group: Chain
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[10rem]">
+        {/* Dropdown items */}
+      </DropdownMenuContent>
+    </DropdownMenu>
   </div>
 </div>
 ```
 
+**Toggle Container Variations:**
+- **Chains:** `["ethereum", "solana", "base", "arbitrum"]`
+- **Side (Perp):** Long (green) / Short (red) with colored active states
+- **Search Input:** For boards with search, put Input on left instead of toggle container
+
+### Controls Row with Search Input on Left (Alternative)
+Use when the board has a search functionality (e.g., searching by trader address).
+
+```tsx
+<div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+  {/* Search Input (Left) */}
+  <div className="flex items-center gap-2 flex-1 min-w-0">
+    <Input
+      type="text"
+      placeholder="Search trader or address"
+      className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
+    />
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+    >
+      Refresh
+    </Button>
+  </div>
+
+  {/* Action Buttons (Right) */}
+  <div className="flex items-center gap-2 flex-wrap">
+    {/* Mobile Filter Toggle, Sort, Group dropdowns */}
+  </div>
+</div>
+```
+
+
 ---
 
 ## Filter Grid Layout
+
+The **12-column grid layout is the preferred pattern** for filter sections. It provides consistent spacing and alignment across components.
 
 ### Grid Container
 - **Mobile**: Collapsible with toggle button
@@ -138,27 +186,93 @@ Components that still need to be aligned:
 ### Column Span Guidelines
 | Element | Span | Notes |
 |---------|------|-------|
-| Date Input (single) | `lg:col-span-2` | For From/To dates separately |
-| Toggle Container (2 options) | `lg:col-span-2` | Side: Long/Short |
-| Toggle Container (4 options) | `lg:col-span-3` | Action: Add/Open/Close/Reduce |
-| Range Input (Min-Max) | `lg:col-span-2` to `lg:col-span-6` | Adjust based on row balance |
-| Dropdown (Per Page) | `lg:col-span-1` | Small dropdown |
-| Apply Button | `lg:col-span-2` | Action button |
+| Date Picker (Popover) | `lg:col-span-2` | From/To dates separately |
+| Pill Container (2 options) | `lg:col-span-2` to `lg:col-span-3` | Stable/Native, Market/Limit |
+| Pill Container (4 options) | `lg:col-span-3` to `lg:col-span-4` | Action: Add/Open/Close/Reduce |
+| Label Pill Container | `lg:col-span-3` | Fund / Smart Trader toggles |
+| Range Input (Min-Max) | `lg:col-span-2` to `lg:col-span-3` | Value ranges, age ranges |
+| Text Input (Token symbol) | `lg:col-span-2` | Token search, etc. |
+| Full-Width Toggle Button | `lg:col-span-2` | Smart Money, New Only |
+| Sector/Tag Buttons (wrapped) | `lg:col-span-10` to `lg:col-span-12` | Category buttons spanning row |
+
+### Pill Container Inside Grid Cell
+Use pill containers inside grid cells for grouped toggles:
+
+```tsx
+<div className="lg:col-span-3">
+  <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+    {["Fund", "Smart Trader"].map((label) => (
+      <Button
+        key={label}
+        variant="ghost"
+        size="sm"
+        className={`h-7 text-[10px] px-3 rounded-sm flex-1 ${
+          includeLabels[label] 
+            ? "bg-[#20222f] text-gray-200 shadow-sm" 
+            : "text-gray-400 hover:text-gray-200"
+        }`}
+        onClick={() => setIncludeLabels((prev) => ({ ...prev, [label]: !prev[label] }))}
+      >
+        {label}
+      </Button>
+    ))}
+  </div>
+</div>
+```
+
+### Range Input Inside Grid Cell
+```tsx
+<div className="lg:col-span-3">
+  <div className="flex items-center gap-1">
+    <Input
+      type="number"
+      placeholder="Min USD"
+      className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
+    />
+    <span className="text-xs text-gray-500">-</span>
+    <Input
+      type="number"
+      placeholder="Max"
+      className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
+    />
+  </div>
+</div>
+```
 
 ### Balanced Row Layout Example
 **Row 1 (12 columns total):**
-- Date From: 2 cols
-- Date To: 2 cols
-- Smart Money: 2 cols
-- Liq Range: 2 cols
-- Vol Range: 2 cols
-- Per Page: 2 cols
+- Include Labels: 3 cols
+- Exclude Labels: 3 cols
+- Token Options: 2 cols
+- Min 24h %: 2 cols
+- Max Age: 2 cols
 
 **Row 2 (12 columns total):**
-- MCap Range: 3 cols
-- Netflow Range: 3 cols
-- Age Range: 2 cols
-- Category Buttons: 4 cols
+- Min Value USD: 2 cols
+- Sector Buttons: 10 cols
+
+### Compact Flex Option (Alternative)
+For filter sections consisting primarily of button groups where density is priority (to avoid large gaps):
+Use `flex flex-col lg:flex-row flex-wrap gap-2 lg:items-center` instead of Grid.
+
+```tsx
+<div className={`${filterOpen ? 'flex' : 'hidden'} flex-col lg:flex-row flex-wrap gap-2 lg:items-center`}>
+  {/* Group 1 */}
+  <div className="flex items-center gap-1">
+    <div className="flex flex-wrap gap-1">
+      {buttons.map(...)}
+    </div>
+  </div>
+  
+  {/* Vertical Divider (Desktop only) */}
+  <div className="hidden lg:block w-px h-4 bg-[#20222f] mx-1"></div>
+  
+  {/* Group 2 */}
+  <div className="flex items-center gap-1">
+    {/* ... */}
+  </div>
+</div>
+```
 
 ---
 

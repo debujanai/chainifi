@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Plus, Calendar, Users as UsersIcon, ArrowRight, Loader, Zap, TrendingUp } from "lucide-react";
+import { MoreHorizontal, Plus, Filter, Loader, ArrowRight, Calendar, TrendingUp, Zap, Users as UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 
 interface TradeSection {
-  section: string; // chain name or label
+  section: string;
   count: number;
   items: DexTrade[];
 }
@@ -28,20 +28,14 @@ function formatTime(ts: string): string {
 }
 
 function formatUSD(value: number): string {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  } else if (value >= 1000) {
-    return `$${(value / 1000).toFixed(1)}K`;
-  }
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
   return `$${value.toFixed(0)}`;
 }
 
 function formatMarketCap(value: number): string {
-  if (value >= 1000000000) {
-    return `$${(value / 1000000000).toFixed(2)}B`;
-  } else if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(2)}M`;
-  }
+  if (value >= 1000000000) return `$${(value / 1000000000).toFixed(2)}B`;
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
   return `$${value.toFixed(0)}`;
 }
 
@@ -52,7 +46,6 @@ function groupTrades(trades: DexTrade[], by: "chain" | "label"): TradeSection[] 
     map[key] = map[key] || [];
     map[key].push(t);
   }
-
   return Object.entries(map).map(([key, items]) => ({
     section: key.charAt(0).toUpperCase() + key.slice(1),
     count: items.length,
@@ -64,8 +57,14 @@ export function DexTradesBoard() {
   const [sections, setSections] = useState<TradeSection[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [allTrades, setAllTrades] = useState<DexTrade[]>([]);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
+
+  // Pagination
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(50);
+  const [isLastPage, setIsLastPage] = useState<boolean>(true);
+
+  // Filters
   const [groupBy, setGroupBy] = useState<"chain" | "label">("chain");
   const [selectedChains, setSelectedChains] = useState<Record<string, boolean>>({ ethereum: true, solana: true });
   const [includeLabels, setIncludeLabels] = useState<Record<string, boolean>>({ Fund: true, "Smart Trader": true });
@@ -75,140 +74,151 @@ export function DexTradesBoard() {
   const [maxTokenAge, setMaxTokenAge] = useState<string>("");
   const [sortBy, setSortBy] = useState<"timestamp" | "value">("timestamp");
 
-  useEffect(() => {
-    let mounted = true;
+  async function load() {
     setLoading(true);
     setError(null);
-    
-    (async () => {
-      try {
-        const activeChains = Object.entries(selectedChains)
-          .filter(([_, selected]) => selected)
-          .map(([chain]) => chain);
-        
-        const activeLabels = Object.entries(includeLabels)
-          .filter(([_, included]) => included)
-          .map(([label]) => label);
+    try {
+      const activeChains = Object.entries(selectedChains)
+        .filter(([_, selected]) => selected)
+        .map(([chain]) => chain);
 
-        const tradeValueFilter = (minValue || maxValue) 
-          ? { min: minValue ? Number(minValue) : undefined, max: maxValue ? Number(maxValue) : undefined }
-          : undefined;
-        
-        const tokenAgeFilter = (minTokenAge || maxTokenAge)
-          ? { min: minTokenAge ? Number(minTokenAge) : undefined, max: maxTokenAge ? Number(maxTokenAge) : undefined }
-          : undefined;
+      const activeLabels = Object.entries(includeLabels)
+        .filter(([_, included]) => included)
+        .map(([label]) => label);
 
-        const orderBy = sortBy === "timestamp" 
-          ? [{ field: "block_timestamp", direction: "DESC" as const }]
-          : [{ field: "trade_value_usd", direction: "DESC" as const }];
+      const tradeValueFilter = (minValue || maxValue)
+        ? { min: minValue ? Number(minValue) : undefined, max: maxValue ? Number(maxValue) : undefined }
+        : undefined;
 
-        const res: DexTradesResponse = await fetchDexTrades(
-          activeChains.length > 0 ? activeChains : ["ethereum", "solana"],
-          {
-            includeSmartMoneyLabels: activeLabels.length > 0 ? activeLabels : ["Fund", "Smart Trader"],
-            tradeValueUsd: tradeValueFilter,
-            tokenBoughtAgeDays: tokenAgeFilter,
-            perPage: 100,
-            sortBy: orderBy,
-          }
-        );
-        
-        if (!mounted) return;
-        setAllTrades(res.data);
-        setSections(groupTrades(res.data, groupBy));
-      } catch (e: any) {
-        if (!mounted) return;
-        setError(e?.message || "Failed to load trades");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [selectedChains, includeLabels, minValue, maxValue, minTokenAge, maxTokenAge, sortBy, groupBy]);
+      const tokenAgeFilter = (minTokenAge || maxTokenAge)
+        ? { min: minTokenAge ? Number(minTokenAge) : undefined, max: maxTokenAge ? Number(maxTokenAge) : undefined }
+        : undefined;
+
+      const orderBy = sortBy === "timestamp"
+        ? [{ field: "block_timestamp", direction: "DESC" as const }]
+        : [{ field: "trade_value_usd", direction: "DESC" as const }];
+
+      const res: DexTradesResponse = await fetchDexTrades(
+        activeChains.length > 0 ? activeChains : ["ethereum", "solana"],
+        {
+          includeSmartMoneyLabels: activeLabels.length > 0 ? activeLabels : ["Fund", "Smart Trader"],
+          tradeValueUsd: tradeValueFilter,
+          tokenBoughtAgeDays: tokenAgeFilter,
+          page,
+          perPage,
+          sortBy: orderBy,
+        }
+      );
+
+      setSections(groupTrades(res.data, groupBy));
+      setIsLastPage(res.pagination?.is_last_page ?? true);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load trades");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChains, includeLabels, minValue, maxValue, minTokenAge, maxTokenAge, sortBy, groupBy, page, perPage]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") load();
+  };
 
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
-              <span className="text-white font-normal">Smart Money DEX Trades</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5">
-                <MoreHorizontal className="w-3 h-3 text-gray-400" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:flex-nowrap">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`h-8 text-xs font-normal ${filterOpen ? "bg-[#272936] text-white" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-              onClick={() => setFilterOpen((v) => !v)}
-            >
-              Filters
+        {/* Title Row */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
+            <span className="text-white font-normal text-sm">Smart Money DEX Trades</span>
+            <Button variant="ghost" size="icon" className="h-5 w-5">
+              <MoreHorizontal className="w-3 h-3 text-gray-400" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                  Sort: {sortBy === "timestamp" ? "Time" : "Value"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[10rem]">
-                <DropdownMenuItem onClick={() => setSortBy("timestamp")}>Sort by Time</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("value")}>Sort by Value</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                  Group: {groupBy === "chain" ? "Chain" : "Label"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[10rem]">
-                <DropdownMenuItem onClick={() => setGroupBy("chain")}>Group by Chain</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setGroupBy("label")}>Group by Label</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
-      </div>
 
-      {filterOpen && (
-        <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Chains */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Chains</label>
-              <div className="flex flex-wrap gap-1.5">
-                {["ethereum", "solana"].map((chain) => (
-                  <Button
-                    key={chain}
-                    variant={selectedChains[chain] ? "secondary" : "outline"}
-                    size="sm"
-                    className={`h-7 text-xs ${selectedChains[chain] ? "bg-blue-500/20 border-blue-500/50 text-blue-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
-                    onClick={() => setSelectedChains((prev) => ({ ...prev, [chain]: !prev[chain] }))}
-                  >
-                    {chain.charAt(0).toUpperCase() + chain.slice(1)}
-                  </Button>
-                ))}
-              </div>
+        {/* Controls Container */}
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Chain Toggles & Actions */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            {/* Chain Toggle Container */}
+            <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+              {["ethereum", "solana"].map((chain) => (
+                <Button
+                  key={chain}
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${selectedChains[chain] ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setSelectedChains((prev) => ({ ...prev, [chain]: !prev[chain] }))}
+                >
+                  {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                </Button>
+              ))}
             </div>
 
-            {/* Labels */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Labels</label>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+                onClick={load}
+                disabled={loading}
+              >
+                {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
+                <Filter className="w-3 h-3 mr-2" />
+                Filters
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+                    Sort: {sortBy === "timestamp" ? "Time" : "Value"} ↓
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  <DropdownMenuItem onClick={() => setSortBy("timestamp")}>Sort by Time</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("value")}>Sort by Value</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+                    Group: {groupBy === "chain" ? "Chain" : "Label"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  <DropdownMenuItem onClick={() => setGroupBy("chain")}>Group by Chain</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setGroupBy("label")}>Group by Label</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Filter Grid - 12 column layout */}
+          <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
+            {/* Include Labels */}
+            <div className="lg:col-span-3">
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
                 {["Fund", "Smart Trader"].map((label) => (
                   <Button
                     key={label}
-                    variant={includeLabels[label] ? "secondary" : "outline"}
+                    variant="ghost"
                     size="sm"
-                    className={`h-7 text-xs ${includeLabels[label] ? "bg-purple-500/20 border-purple-500/50 text-purple-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                    className={`h-7 text-[10px] px-3 rounded-sm flex-1 ${includeLabels[label] ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
                     onClick={() => setIncludeLabels((prev) => ({ ...prev, [label]: !prev[label] }))}
                   >
                     {label}
@@ -217,227 +227,230 @@ export function DexTradesBoard() {
               </div>
             </div>
 
-            {/* Trade Value */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Trade Value (USD)</label>
-              <div className="flex gap-2">
+            {/* Value Range */}
+            <div className="lg:col-span-3">
+              <div className="flex items-center gap-1">
                 <Input
                   type="number"
-                  placeholder="Min"
+                  placeholder="Min USD"
                   value={minValue}
                   onChange={(e) => setMinValue(e.target.value)}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white"
+                  onKeyDown={handleKeyDown}
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
+                <span className="text-xs text-gray-500">-</span>
                 <Input
                   type="number"
                   placeholder="Max"
                   value={maxValue}
                   onChange={(e) => setMaxValue(e.target.value)}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white"
+                  onKeyDown={handleKeyDown}
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
               </div>
             </div>
 
-            {/* Token Age */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Token Age (days)</label>
-              <div className="flex gap-2">
+            {/* Token Age Range */}
+            <div className="lg:col-span-3">
+              <div className="flex items-center gap-1">
                 <Input
                   type="number"
-                  placeholder="Min"
+                  placeholder="Min Age"
                   value={minTokenAge}
                   onChange={(e) => setMinTokenAge(e.target.value)}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white"
+                  onKeyDown={handleKeyDown}
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
+                <span className="text-xs text-gray-500">-</span>
                 <Input
                   type="number"
                   placeholder="Max"
                   value={maxTokenAge}
                   onChange={(e) => setMaxTokenAge(e.target.value)}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white"
+                  onKeyDown={handleKeyDown}
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="py-4 pr-4 pl-0">
           <div className="min-w-full">
-          {loading && (
-            <div className="flex items-center justify-center py-6">
-              <Loader className="w-4 h-4 text-blue-400 animate-spin" />
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3">
-              <span className="text-[10px] text-red-300 font-normal">{error}</span>
-            </div>
-          )}
-
-          {sections.map((section) => (
-            <div key={section.section} className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
-                    backgroundColor: section.section.toLowerCase() === "solana" ? "#14b8a6" : 
-                                     section.section.toLowerCase() === "ethereum" ? "#627EEA" :
-                                     "#eab308"
-                  }}>
-                    {section.section.toLowerCase() === "solana" ? (
-                      <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                    ) : section.section.toLowerCase() === "ethereum" ? (
-                      <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
-                    ) : (
-                      <TrendingUp className="w-3 h-3 text-white" />
-                    )}
-                  </div>
-                  <span className="text-sm font-medium text-white">{section.section}</span>
-                  <span className="text-xs text-gray-500">{section.count}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 ml-auto hover:bg-[#20222f]"
-                  aria-label="Add"
-                >
-                  <Plus className="w-3 h-3 text-gray-400" />
-                </Button>
+            {loading && (
+              <div className="flex items-center justify-center py-6 ml-4">
+                <Loader className="w-4 h-4 text-blue-400 animate-spin" />
               </div>
+            )}
 
-              <div className="space-y-1">
-                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500 md:whitespace-nowrap">
-                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[160px] ml-0 pl-3 py-2 rounded-l">
-                    <div className="h-6 w-6" />
-                    <div className="min-w-[100px]">Pair</div>
+            {error && (
+              <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3 ml-4">
+                <span className="text-[10px] text-red-300 font-normal">{error}</span>
+              </div>
+            )}
+
+            {!loading && sections.map((section) => (
+              <div key={section.section} className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="sticky left-0 z-10 bg-[#141723] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${section.section.toLowerCase() === "solana" ? "bg-[#14b8a6]" :
+                      section.section.toLowerCase() === "ethereum" ? "bg-[#627EEA]" :
+                        "bg-[#eab308]"
+                      }`} />
+                    <span className="text-sm font-medium text-white">{section.section}</span>
+                    <span className="text-xs text-gray-500">{section.count}</span>
                   </div>
-                  <div className="min-w-[160px]">Addresses (B/S)</div>
-                  <div className="flex-1">Tx Hash</div>
-                  <div className="min-w-[120px]">Label</div>
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="min-w-[100px] text-right">Value USD</div>
-                    <div className="min-w-[120px] text-right">Bought</div>
-                    <div className="min-w-[120px] text-right">Sold</div>
-                  </div>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="min-w-[80px]">Age (b/s)</div>
-                    <div className="min-w-[100px]">Mcaps (b/s)</div>
-                    <div className="min-w-[100px]">Time</div>
-                  </div>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto hover:bg-[#20222f]">
+                    <Plus className="w-3 h-3 text-gray-400" />
+                  </Button>
                 </div>
-                {section.items.map((item, idx) => {
-                  const isHighValue = item.trade_value_usd >= 5000;
-                  
-                  return (
-                    <div
-                      key={`${item.transaction_hash}-${idx}`}
-                      className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group md:whitespace-nowrap"
-                >
-                      <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[160px] pr-2 ml-0 pl-3 py-2.5 rounded-l">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                        </Button>
-                        <div className="flex items-center sm:items-start gap-3">
-                          <div className="text-sm text-white font-medium flex items-center gap-1.5">
-                            <span>{item.token_bought_symbol}</span>
-                            <ArrowRight className="w-3 h-3 text-gray-500" />
-                            <span>{item.token_sold_symbol}</span>
-                            {groupBy !== "chain" && (
-                              <span className="ml-2 text-xs text-gray-500">
-                                {item.chain.charAt(0).toUpperCase() + item.chain.slice(1)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="min-w-[160px]">
-                        <div className="flex flex-col leading-tight">
-                          <div className="font-mono text-[10px] text-gray-500">
-                            B: {item.token_bought_address.slice(0, 4)}...{item.token_bought_address.slice(-3)}
-                          </div>
-                          <div className="font-mono text-[10px] text-gray-500">
-                            S: {item.token_sold_address.slice(0, 4)}...{item.token_sold_address.slice(-3)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="font-mono text-xs text-gray-400">
-                          {item.transaction_hash.slice(0, 6)}...{item.transaction_hash.slice(-4)}
-                        </div>
-                      </div>
-
-                      {/* Label (like Tags) */}
-                      <div className="flex items-center gap-1.5 flex-wrap min-w-[120px]">
-                        {item.trader_address_label && (
-                          <Badge 
-                            variant="secondary" 
-                            className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2 rounded-full flex items-center gap-1"
-                          >
-                            {item.trader_address_label.toLowerCase().includes("fund") ? (
-                              <UsersIcon className="w-3 h-3" />
-                            ) : (
-                              <Zap className="w-3 h-3" />
-                            )}
-                            <span className="truncate max-w-[80px]">{item.trader_address_label}</span>
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Value and Amounts */}
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="text-right min-w-[100px]">
-                          <div className={`text-xs font-semibold ${isHighValue ? "text-yellow-400" : "text-gray-300"}`}>
-                            {formatUSD(item.trade_value_usd)}
-                          </div>
-                        </div>
-                        <div className="text-right min-w-[120px]">
-                          <div className="text-xs font-medium text-gray-300">
-                            {item.token_bought_amount.toFixed(4)} {item.token_bought_symbol}
-                          </div>
-                        </div>
-                        <div className="text-right min-w-[120px]">
-                          <div className="text-xs font-medium text-gray-300">
-                            {item.token_sold_amount.toFixed(4)} {item.token_sold_symbol}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Additional Info */}
-                      <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
-                        <div className="min-w-[80px]">
-                          <div className="text-gray-300">
-                            {item.token_bought_age_days}d / {item.token_sold_age_days}d
-                          </div>
-                        </div>
-                        <div className="min-w-[100px]">
-                          <div className="text-gray-300 leading-tight">
-                            {formatMarketCap(item.token_bought_market_cap)} / {formatMarketCap(item.token_sold_market_cap)}
-                          </div>
-                        </div>
-                        <div className="min-w-[100px]">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3 text-orange-500" />
-                            <span className="text-gray-300">{formatTime(item.block_timestamp)}</span>
-                          </div>
-                        </div>
-                      </div>
+                <div className="space-y-1">
+                  {/* Header Row */}
+                  <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                    <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[160px] py-2 pl-7 pr-3 rounded-l border-y border-l border-transparent">
+                      <div className="h-6 w-6" />
+                      <div className="min-w-[100px]">Pair</div>
                     </div>
-                  );
-                })}
+                    <div className="flex-1 flex items-center justify-end min-w-0 gap-0 py-2 pr-3 border-y border-r border-transparent">
+                      <div className="w-[100px] text-center">Label</div>
+                      <div className="w-[100px] text-center">Value USD</div>
+                      <div className="w-[120px] text-center">Bought</div>
+                      <div className="w-[120px] text-center">Sold</div>
+                      <div className="w-[80px] text-center">Age</div>
+                      <div className="w-[100px] text-center">MCaps</div>
+                      <div className="w-[120px] text-center">Time</div>
+                    </div>
+                  </div>
+
+                  {section.items.map((item, idx) => {
+                    const isHighValue = item.trade_value_usd >= 5000;
+
+                    return (
+                      <div
+                        key={`${item.transaction_hash}-${idx}`}
+                        className="flex items-stretch group whitespace-nowrap"
+                      >
+                        {/* Sticky Column - Pair */}
+                        <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                          <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[160px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                            </Button>
+                            <div className="text-xs text-blue-300 font-medium flex items-center gap-1.5">
+                              <span>{item.token_bought_symbol}</span>
+                              <ArrowRight className="w-3 h-3 text-gray-500" />
+                              <span>{item.token_sold_symbol}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="flex-1 flex items-center justify-end min-w-0 gap-0 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150">
+                          {/* Label */}
+                          <div className="w-[100px] flex justify-center">
+                            {item.trader_address_label && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2 rounded-full flex items-center gap-1"
+                              >
+                                {item.trader_address_label.toLowerCase().includes("fund") ? (
+                                  <UsersIcon className="w-3 h-3" />
+                                ) : (
+                                  <Zap className="w-3 h-3" />
+                                )}
+                                <span className="truncate max-w-[60px]">{item.trader_address_label}</span>
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Value USD */}
+                          <div className="w-[100px] flex justify-center">
+                            <span className={`text-xs font-semibold ${isHighValue ? "text-yellow-400" : "text-white"}`}>
+                              {formatUSD(item.trade_value_usd)}
+                            </span>
+                          </div>
+
+                          {/* Bought */}
+                          <div className="w-[120px] flex justify-center">
+                            <span className="text-xs text-green-400">
+                              {item.token_bought_amount.toFixed(4)} {item.token_bought_symbol}
+                            </span>
+                          </div>
+
+                          {/* Sold */}
+                          <div className="w-[120px] flex justify-center">
+                            <span className="text-xs text-red-400">
+                              {item.token_sold_amount.toFixed(4)} {item.token_sold_symbol}
+                            </span>
+                          </div>
+
+                          {/* Age */}
+                          <div className="w-[80px] flex justify-center">
+                            <span className="text-xs text-gray-400">
+                              {item.token_bought_age_days}d / {item.token_sold_age_days}d
+                            </span>
+                          </div>
+
+                          {/* MCaps */}
+                          <div className="w-[100px] flex justify-center">
+                            <span className="text-xs text-blue-300/80">
+                              {formatMarketCap(item.token_bought_market_cap)}
+                            </span>
+                          </div>
+
+                          {/* Time */}
+                          <div className="w-[120px] flex justify-center">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3 h-3 text-orange-500" />
+                              <span className="text-xs text-gray-300">{formatTime(item.block_timestamp)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
       </ScrollArea>
+
+      {/* Pagination Controls */}
+      {!loading && sections.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-[#20222f] bg-[#141723]">
+          <div className="text-xs text-gray-400">
+            Page {page}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1 || loading}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={isLastPage || loading}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

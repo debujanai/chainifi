@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal, Plus, Filter, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -51,10 +51,14 @@ export function HoldingsBoard() {
   const [sections, setSections] = useState<HoldingsSection[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [allHoldings, setAllHoldings] = useState<HoldingData[]>([]);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
 
-  // filters
+  // Pagination
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(100);
+  const [isLastPage, setIsLastPage] = useState<boolean>(true);
+
+  // Filters
   const [selectedChains, setSelectedChains] = useState<Record<string, boolean>>({ ethereum: true, solana: true });
   const [includeLabels, setIncludeLabels] = useState<Record<string, boolean>>({ Fund: true, "Smart Trader": true });
   const [excludeLabels, setExcludeLabels] = useState<Record<string, boolean>>({});
@@ -62,149 +66,158 @@ export function HoldingsBoard() {
   const [includeNativeTokens, setIncludeNativeTokens] = useState<boolean>(true);
   const [selectedSectors, setSelectedSectors] = useState<Record<string, boolean>>({});
 
-  // sort
+  // Sort
   const [sortBy, setSortBy] = useState<"value_usd" | "balance_24h_percent_change" | "holders_count" | "share_of_holdings_percent" | "token_age_days">("value_usd");
   const [sortDirection, setSortDirection] = useState<"DESC" | "ASC">("DESC");
 
-  // numeric filters
-  const [min24hChange, setMin24hChange] = useState<number | undefined>(undefined);
-  const [maxTokenAge, setMaxTokenAge] = useState<number | undefined>(undefined);
-  const [minValueUsd, setMinValueUsd] = useState<number | undefined>(undefined);
+  // Numeric Filters
+  const [min24hChange, setMin24hChange] = useState<string>("");
+  const [maxTokenAge, setMaxTokenAge] = useState<string>("");
+  const [minValueUsd, setMinValueUsd] = useState<string>("");
 
   const availableSectors = ["DeFi", "Infrastructure", "Layer 1", "Stablecoin", "Gaming", "Meme", "NFT", "Layer 2"];
 
-  useEffect(() => {
-    let mounted = true;
+  async function load() {
     setLoading(true);
     setError(null);
+    try {
+      const activeChains = Object.entries(selectedChains)
+        .filter(([_, selected]) => selected)
+        .map(([chain]) => chain);
 
-    (async () => {
-      try {
-        const activeChains = Object.entries(selectedChains)
-          .filter(([_, selected]) => selected)
-          .map(([chain]) => chain);
+      const activeLabels = Object.entries(includeLabels)
+        .filter(([_, included]) => included)
+        .map(([label]) => label);
 
-        const activeLabels = Object.entries(includeLabels)
-          .filter(([_, included]) => included)
-          .map(([label]) => label);
+      const excludedLabels = Object.entries(excludeLabels)
+        .filter(([_, excluded]) => excluded)
+        .map(([label]) => label);
 
-        const excludedLabels = Object.entries(excludeLabels)
-          .filter(([_, excluded]) => excluded)
-          .map(([label]) => label);
+      const activeSectors = Object.entries(selectedSectors)
+        .filter(([_, selected]) => selected)
+        .map(([sector]) => sector);
 
-        const activeSectors = Object.entries(selectedSectors)
-          .filter(([_, selected]) => selected)
-          .map(([sector]) => sector);
+      const res: HoldingsResponse = await fetchHoldingsData(
+        activeChains.length > 0 ? activeChains : ["ethereum", "solana"],
+        {
+          includeSmartMoneyLabels: activeLabels.length > 0 ? activeLabels : ["Fund", "Smart Trader"],
+          excludeSmartMoneyLabels: excludedLabels.length > 0 ? excludedLabels : undefined,
+          includeStablecoins,
+          includeNativeTokens,
+          tokenSectors: activeSectors.length > 0 ? activeSectors : undefined,
+          balance24hPercentChange: min24hChange ? { min: Number(min24hChange) } : undefined,
+          tokenAgeDays: maxTokenAge ? { max: Number(maxTokenAge) } : undefined,
+          valueUsd: minValueUsd ? { min: Number(minValueUsd) } : undefined,
+          page,
+          perPage,
+          sortBy: [{ field: sortBy, direction: sortDirection }],
+        }
+      );
 
-        const sortField = sortBy;
+      setSections(groupHoldings(res.data));
+      setIsLastPage(res.pagination?.is_last_page ?? true);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load holdings");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-        const res: HoldingsResponse = await fetchHoldingsData(
-          activeChains.length > 0 ? activeChains : ["ethereum", "solana"],
-          {
-            includeSmartMoneyLabels: activeLabels.length > 0 ? activeLabels : ["Fund", "Smart Trader"],
-            excludeSmartMoneyLabels: excludedLabels.length > 0 ? excludedLabels : undefined,
-            includeStablecoins,
-            includeNativeTokens,
-            tokenSectors: activeSectors.length > 0 ? activeSectors : undefined,
-            balance24hPercentChange: min24hChange !== undefined ? { min: min24hChange } : undefined,
-            tokenAgeDays: maxTokenAge !== undefined ? { max: maxTokenAge } : undefined,
-            valueUsd: minValueUsd !== undefined ? { min: minValueUsd } : undefined,
-            perPage: 100,
-            sortBy: [{ field: sortField, direction: sortDirection }],
-          }
-        );
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChains, includeLabels, excludeLabels, includeStablecoins, includeNativeTokens, selectedSectors, sortBy, sortDirection, page, perPage]);
 
-        if (!mounted) return;
-        setAllHoldings(res.data);
-        setSections(groupHoldings(res.data));
-      } catch (e: any) {
-        if (!mounted) return;
-        setError(e?.message || "Failed to load holdings");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [selectedChains, includeLabels, excludeLabels, includeStablecoins, includeNativeTokens, selectedSectors, sortBy, sortDirection, min24hChange, maxTokenAge, minValueUsd]);
+  // Handle enter key for numeric inputs
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") load();
+  };
 
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">📦</div>
-              <span className="text-white font-normal">Smart Money Holdings</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5">
-                <MoreHorizontal className="w-3 h-3 text-gray-400" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:flex-nowrap">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`h-8 text-xs font-normal ${filterOpen ? "bg-[#272936] text-white" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-              onClick={() => setFilterOpen((v) => !v)}
-            >
-              Filters
+        {/* Title Row */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">📦</div>
+            <span className="text-white font-normal text-sm">Smart Money Holdings</span>
+            <Button variant="ghost" size="icon" className="h-5 w-5">
+              <MoreHorizontal className="w-3 h-3 text-gray-400" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                  Sort: {sortBy.replaceAll("_", " ")} {sortDirection === "DESC" ? "↓" : "↑"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[14rem]">
-                <DropdownMenuItem onClick={() => setSortBy("value_usd")}>Sort by Value USD</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("balance_24h_percent_change")}>Sort by 24h % Change</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("holders_count")}>Sort by Holders</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("share_of_holdings_percent")}>Sort by Share %</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("token_age_days")}>Sort by Token Age</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
-                  Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
-      </div>
 
-      {filterOpen && (
-        <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Chains */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Chains</label>
-              <div className="flex flex-wrap gap-1.5">
-                {["ethereum", "solana"].map((chain) => (
-                  <Button
-                    key={chain}
-                    variant={selectedChains[chain] ? "secondary" : "outline"}
-                    size="sm"
-                    className={`h-7 text-xs ${selectedChains[chain] ? "bg-blue-500/20 border-blue-500/50 text-blue-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
-                    onClick={() => setSelectedChains((prev) => ({ ...prev, [chain]: !prev[chain] }))}
-                  >
-                    {chain.charAt(0).toUpperCase() + chain.slice(1)}
-                  </Button>
-                ))}
-              </div>
+        {/* Controls Container */}
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Chain Toggles & Actions */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            {/* Chain Toggle Container */}
+            <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+              {["ethereum", "solana"].map((chain) => (
+                <Button
+                  key={chain}
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 text-[10px] px-3 rounded-sm ${selectedChains[chain] ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+                  onClick={() => setSelectedChains((prev) => ({ ...prev, [chain]: !prev[chain] }))}
+                >
+                  {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                </Button>
+              ))}
             </div>
 
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+                onClick={load}
+                disabled={loading}
+              >
+                {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
+                <Filter className="w-3 h-3 mr-2" />
+                Filters
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+                    Sort: {sortBy.replace(/_/g, " ").replace("percent", "%")} {sortDirection === "DESC" ? "↓" : "↑"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[14rem]">
+                  <DropdownMenuItem onClick={() => setSortBy("value_usd")}>Sort by Value USD</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("balance_24h_percent_change")}>Sort by 24h % Change</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("holders_count")}>Sort by Holders</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("share_of_holdings_percent")}>Sort by Share %</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("token_age_days")}>Sort by Token Age</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
+                    Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Filter Grid - 12 column layout */}
+          <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
             {/* Include Labels */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Include Labels</label>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="lg:col-span-3">
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
                 {["Fund", "Smart Trader"].map((label) => (
                   <Button
                     key={label}
-                    variant={includeLabels[label] ? "secondary" : "outline"}
+                    variant="ghost"
                     size="sm"
-                    className={`h-7 text-xs ${includeLabels[label] ? "bg-purple-500/20 border-purple-500/50 text-purple-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                    className={`h-7 text-[10px] px-3 rounded-sm flex-1 ${includeLabels[label] ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
                     onClick={() => setIncludeLabels((prev) => ({ ...prev, [label]: !prev[label] }))}
                   >
                     {label}
@@ -214,88 +227,92 @@ export function HoldingsBoard() {
             </div>
 
             {/* Exclude Labels */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Exclude Labels</label>
-              <div className="flex flex-wrap gap-1.5">
-                {["30D Smart Trader", "7D Smart Trader"].map((label) => (
-                  <Button
-                    key={label}
-                    variant={excludeLabels[label] ? "secondary" : "outline"}
-                    size="sm"
-                    className={`h-7 text-xs ${excludeLabels[label] ? "bg-red-500/20 border-red-500/50 text-red-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
-                    onClick={() => setExcludeLabels((prev) => ({ ...prev, [label]: !prev[label] }))}
-                  >
-                    {label}
-                  </Button>
-                ))}
+            <div className="lg:col-span-3">
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+                {["30D ST", "7D ST"].map((label, idx) => {
+                  const fullLabel = idx === 0 ? "30D Smart Trader" : "7D Smart Trader";
+                  return (
+                    <Button
+                      key={label}
+                      variant="ghost"
+                      size="sm"
+                      className={`h-7 text-[10px] px-3 rounded-sm flex-1 ${excludeLabels[fullLabel] ? "bg-red-500/20 text-red-300" : "text-gray-400 hover:text-gray-200"}`}
+                      onClick={() => setExcludeLabels((prev) => ({ ...prev, [fullLabel]: !prev[fullLabel] }))}
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Token Options */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Token Options</label>
-              <div className="flex flex-col gap-1.5">
+            <div className="lg:col-span-2">
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
                 <Button
-                  variant={includeStablecoins ? "secondary" : "outline"}
+                  variant="ghost"
                   size="sm"
-                  className={`h-7 text-xs justify-start ${includeStablecoins ? "bg-green-500/20 border-green-500/50 text-green-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                  className={`h-7 text-[10px] px-2 rounded-sm flex-1 ${includeStablecoins ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
                   onClick={() => setIncludeStablecoins(!includeStablecoins)}
                 >
-                  {includeStablecoins ? "✓" : ""} Include Stablecoins
+                  Stable
                 </Button>
                 <Button
-                  variant={includeNativeTokens ? "secondary" : "outline"}
+                  variant="ghost"
                   size="sm"
-                  className={`h-7 text-xs justify-start ${includeNativeTokens ? "bg-blue-500/20 border-blue-500/50 text-blue-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                  className={`h-7 text-[10px] px-2 rounded-sm flex-1 ${includeNativeTokens ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
                   onClick={() => setIncludeNativeTokens(!includeNativeTokens)}
                 >
-                  {includeNativeTokens ? "✓" : ""} Include Native Tokens
+                  Native
                 </Button>
               </div>
             </div>
 
-            {/* Numeric Filters */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">24h % Change (min)</label>
+            {/* Min 24h % */}
+            <div className="lg:col-span-2">
               <Input
                 type="number"
-                value={min24hChange ?? ""}
-                onChange={(e) => setMin24hChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                className="h-7 text-xs bg-[#20222f] border-[#20222f] text-gray-300"
-                placeholder="e.g. 10"
+                placeholder="Min 24h %"
+                value={min24hChange}
+                onChange={(e) => setMin24hChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Token Age (max days)</label>
+
+            {/* Max Age */}
+            <div className="lg:col-span-2">
               <Input
                 type="number"
-                value={maxTokenAge ?? ""}
-                onChange={(e) => setMaxTokenAge(e.target.value === "" ? undefined : Number(e.target.value))}
-                className="h-7 text-xs bg-[#20222f] border-[#20222f] text-gray-300"
-                placeholder="e.g. 30"
+                placeholder="Max Age (days)"
+                value={maxTokenAge}
+                onChange={(e) => setMaxTokenAge(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Min Value USD</label>
+
+            {/* Min Value USD - Row 2 */}
+            <div className="lg:col-span-2">
               <Input
                 type="number"
-                value={minValueUsd ?? ""}
-                onChange={(e) => setMinValueUsd(e.target.value === "" ? undefined : Number(e.target.value))}
-                className="h-7 text-xs bg-[#20222f] border-[#20222f] text-gray-300"
-                placeholder="e.g. 10000"
+                placeholder="Min Value USD"
+                value={minValueUsd}
+                onChange={(e) => setMinValueUsd(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
               />
             </div>
 
             {/* Sectors */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Sectors</label>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="lg:col-span-10">
+              <div className="flex items-center gap-1 flex-wrap">
                 {availableSectors.map((sector) => (
                   <Button
                     key={sector}
-                    variant={selectedSectors[sector] ? "secondary" : "outline"}
+                    variant="ghost"
                     size="sm"
-                    className={`h-7 text-xs ${selectedSectors[sector] ? "bg-gray-500/20 border-gray-500/50 text-gray-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                    className={`h-7 text-[10px] px-2 rounded-sm border ${selectedSectors[sector] ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/50" : "bg-[#171a26] text-gray-400 border-[#20222f] hover:bg-[#20222f]"}`}
                     onClick={() => setSelectedSectors((prev) => ({ ...prev, [sector]: !prev[sector] }))}
                   >
                     {sector}
@@ -305,145 +322,174 @@ export function HoldingsBoard() {
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="py-4 pr-4 pl-0">
           <div className="min-w-full">
-          {loading && (
-            <div className="flex items-center gap-2 p-2 rounded bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-30 mb-3">
-              <span className="text-[10px] text-blue-300 font-normal">Loading holdings…</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3">
-              <span className="text-[10px] text-red-300 font-normal">{error}</span>
-            </div>
-          )}
-
-          {sections.map((section) => (
-            <div key={section.section} className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] ml-[-16px] pl-4 pr-3 rounded-l flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
-                    backgroundColor: section.section.toLowerCase() === "solana" ? "#14b8a6" : "#eab308"
-                  }}>
-                    <div className="w-2.5 h-2.5 bg-[#0d0d0d] rounded-full"></div>
-                  </div>
-                  <span className="text-sm font-medium text-white">{section.section}</span>
-                  <span className="text-xs text-gray-500">{section.count}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 ml-auto hover:bg-[#20222f]"
-                  aria-label="Add"
-                >
-                  <Plus className="w-3 h-3 text-gray-400" />
-                </Button>
+            {loading && (
+              <div className="flex items-center justify-center py-6 ml-4">
+                <Loader className="w-4 h-4 text-blue-400 animate-spin" />
               </div>
+            )}
 
-              <div className="space-y-1">
-                <div className="relative flex items-center gap-3 pr-3 pl-0 py-2 text-[10px] uppercase tracking-wide text-gray-500 md:whitespace-nowrap">
-                  <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[90px] ml-0 pl-3 rounded-l">
-                    <div className="h-6 w-6" />
-                    <div className="min-w-[60px]">Symbol</div>
+            {error && (
+              <div className="flex items-center gap-2 p-2 rounded bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 mb-3 ml-4">
+                <span className="text-[10px] text-red-300 font-normal">{error}</span>
+              </div>
+            )}
+
+            {!loading && sections.map((section) => (
+              <div key={section.section} className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="sticky left-0 z-10 bg-[#141723] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${section.section.toLowerCase() === "solana" ? "bg-[#14b8a6]" : "bg-[#eab308]"
+                      }`} />
+                    <span className="text-sm font-medium text-white">{section.section}</span>
+                    <span className="text-xs text-gray-500">{section.count}</span>
                   </div>
-                  <div className="flex-1">Token</div>
-                  <div className="min-w-[120px]">Sectors</div>
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="min-w-[90px] text-right">Value</div>
-                    <div className="min-w-[80px] text-right">24h %</div>
-                    <div className="min-w-[80px] text-right">Holders</div>
-                    <div className="min-w-[90px] text-right">Share %</div>
-                  </div>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="min-w-[50px]">Age</div>
-                    <div className="min-w-[90px] text-right">Mkt Cap</div>
-                  </div>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto hover:bg-[#20222f]">
+                    <Plus className="w-3 h-3 text-gray-400" />
+                  </Button>
                 </div>
 
-                {section.items.map((item) => (
-                  <div
-                    key={`${item.chain}-${item.token_address}`}
-                    className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group md:whitespace-nowrap"
-                  >
-                    <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[110px] pr-3 ml-0 pl-3 rounded-l">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                      </Button>
-                      <div className="font-mono text-xs text-gray-400 min-w-[60px]">{item.token_symbol}</div>
+                <div className="space-y-1">
+                  {/* Header Row */}
+                  <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                    <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[120px] py-2 pl-7 pr-3 rounded-l border-y border-l border-transparent">
+                      <div className="h-6 w-6" />
+                      <div className="min-w-[60px]">Symbol</div>
                     </div>
-
-                    {/* Token Name */}
-                    <div className="flex-1 text-sm text-white font-medium min-w-0">
-                      {item.token_symbol}
-                      <span className="ml-2 text-xs text-gray-500">
-                        {item.chain.charAt(0).toUpperCase() + item.chain.slice(1)}
-                      </span>
+                    <div className="flex-1 flex items-center justify-end min-w-0 gap-0 py-2 pr-3 border-y border-r border-transparent">
+                      <div className="w-[120px] text-center">Sectors</div>
+                      <div className="w-[90px] text-center">Value USD</div>
+                      <div className="w-[80px] text-center">24h %</div>
+                      <div className="w-[80px] text-center">Holders</div>
+                      <div className="w-[90px] text-center">Share %</div>
+                      <div className="w-[50px] text-center">Age</div>
+                      <div className="w-[90px] text-center">Mkt Cap</div>
                     </div>
+                  </div>
 
-                    {/* Sectors */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {item.token_sectors && item.token_sectors.length > 0 ? (
-                        item.token_sectors.slice(0, 3).map((sector, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="secondary"
-                            className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2 rounded-full flex items-center gap-1"
+                  {section.items.map((item, idx) => (
+                    <div
+                      key={`${item.chain}-${item.token_address}-${idx}`}
+                      className="flex items-stretch group whitespace-nowrap"
+                    >
+                      {/* Sticky Column - Symbol */}
+                      <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                        <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[120px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            <div
-                              className="w-1.5 h-1.5 rounded-full"
-                              style={{
-                                backgroundColor:
-                                  sector === "DeFi" ? "#3b82f6" :
-                                  sector === "Stablecoin" ? "#10b981" :
-                                  sector === "Gaming" ? "#8b5cf6" :
-                                  sector === "Meme" ? "#f59e0b" :
-                                  sector === "Infrastructure" ? "#06b6d4" :
-                                  "#6b7280",
-                              }}
-                            ></div>
-                            {sector}
-                          </Badge>
-                        ))
-                      ) : null}
-                    </div>
+                            <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                          </Button>
+                          <div className="text-xs text-blue-300 font-medium min-w-[60px]">
+                            {item.token_symbol}
+                          </div>
+                        </div>
+                      </div>
 
-                    {/* Value & changes */}
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="text-right min-w-[90px]">
-                        <div className="text-xs font-medium text-gray-200">{formatUSD(item.value_usd)}</div>
-                      </div>
-                      <div className="text-right min-w-[80px]">
-                        <div className={`text-xs font-semibold ${item.balance_24h_percent_change >= 0 ? "text-green-400" : "text-red-400"}`}>{formatPercent(item.balance_24h_percent_change)}</div>
-                      </div>
-                      <div className="text-right min-w-[80px]">
-                        <div className="text-xs font-medium text-gray-200">{item.holders_count}</div>
-                      </div>
-                      <div className="text-right min-w-[90px]">
-                        <div className="text-xs font-medium text-gray-200">{item.share_of_holdings_percent.toFixed(2)}%</div>
-                      </div>
-                    </div>
+                      {/* Main Content */}
+                      <div className="flex-1 flex items-center justify-end min-w-0 gap-0 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150">
+                        {/* Sectors */}
+                        <div className="w-[120px] flex justify-center gap-1">
+                          {item.token_sectors && item.token_sectors.length > 0 ? (
+                            item.token_sectors.slice(0, 2).map((sector, idx) => (
+                              <Badge
+                                key={idx}
+                                variant="secondary"
+                                className="text-[10px] h-5 bg-gray-700/50 text-gray-300 border-0 px-2 rounded-full flex items-center gap-1"
+                              >
+                                <div
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{
+                                    backgroundColor:
+                                      sector === "DeFi" ? "#3b82f6" :
+                                        sector === "Stablecoin" ? "#10b981" :
+                                          sector === "Gaming" ? "#8b5cf6" :
+                                            sector === "Meme" ? "#f59e0b" :
+                                              sector === "Infrastructure" ? "#06b6d4" :
+                                                "#6b7280",
+                                  }}
+                                ></div>
+                                {sector}
+                              </Badge>
+                            ))
+                          ) : null}
+                        </div>
 
-                    {/* Additional Info */}
-                    <div className="flex items-center gap-3 text-xs text-gray-400 min-w-0 ml-auto">
-                      <div className="min-w-[50px]">{item.token_age_days}d</div>
-                      <div className="min-w-[90px] text-right">{formatMarketCap(item.market_cap_usd)}</div>
+                        {/* Value USD */}
+                        <div className="w-[90px] flex justify-center">
+                          <span className="text-xs text-white font-medium">{formatUSD(item.value_usd)}</span>
+                        </div>
+
+                        {/* 24h Change */}
+                        <div className="w-[80px] flex justify-center">
+                          <span className={`text-xs font-semibold ${item.balance_24h_percent_change >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {formatPercent(item.balance_24h_percent_change)}
+                          </span>
+                        </div>
+
+                        {/* Holders */}
+                        <div className="w-[80px] flex justify-center">
+                          <span className="text-xs text-gray-300">{item.holders_count}</span>
+                        </div>
+
+                        {/* Share % */}
+                        <div className="w-[90px] flex justify-center">
+                          <span className="text-xs text-blue-300/80">{item.share_of_holdings_percent.toFixed(2)}%</span>
+                        </div>
+
+                        {/* Age */}
+                        <div className="w-[50px] flex justify-center">
+                          <span className="text-xs text-gray-400">{item.token_age_days}d</span>
+                        </div>
+
+                        {/* Mkt Cap */}
+                        <div className="w-[90px] flex justify-center">
+                          <span className="text-xs text-blue-300/80">{formatMarketCap(item.market_cap_usd)}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
       </ScrollArea>
+
+      {/* Pagination Controls - Fixed at bottom */}
+      {!loading && sections.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-[#20222f] bg-[#141723]">
+          <div className="text-xs text-gray-400">
+            Page {page}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1 || loading}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={isLastPage || loading}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
