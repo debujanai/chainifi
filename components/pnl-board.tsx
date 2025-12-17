@@ -199,52 +199,51 @@ export function PnlBoard() {
               </DropdownMenu>
             </div>
           </div>
-        </div>
-      </div>
 
-      {filterOpen && (
-        <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Collapsible Filter Grid */}
+          <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
             {/* Date Range */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Input
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  placeholder="From (YYYY-MM-DD)"
-                  className="h-8 bg-[#171a26] border-[#20222f] text-xs text-gray-200 placeholder:text-gray-400"
-                />
-                <Input
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  placeholder="To (YYYY-MM-DD)"
-                  className="h-8 bg-[#171a26] border-[#20222f] text-xs text-gray-200 placeholder:text-gray-400"
-                />
-              </div>
+            <div className="lg:col-span-3 flex gap-2">
+              <Input
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                placeholder="From (YYYY-MM-DD)"
+                className="h-8 bg-[#171a26] border-[#20222f] text-xs text-gray-200 placeholder:text-gray-400 flex-1"
+              />
+              <Input
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                placeholder="To (YYYY-MM-DD)"
+                className="h-8 bg-[#171a26] border-[#20222f] text-xs text-gray-200 placeholder:text-gray-400 flex-1"
+              />
+            </div>
+
+            {/* Apply Range */}
+            <div className="lg:col-span-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs bg-[#171a26] border border-[#20222f] hover:bg-[#1c1e2b] text-gray-300 font-normal"
+                className="h-8 text-xs w-full bg-[#171a26] border border-[#20222f] hover:bg-[#1c1e2b] text-gray-300 font-normal"
                 onClick={() => { setPage(1); load(); }}
               >
                 <Calendar className="w-3 h-3 mr-1" /> Apply Range
               </Button>
             </div>
 
-            {/* Options */}
-            <div className="flex flex-col gap-2">
+            {/* Show Realized Toggle */}
+            <div className="lg:col-span-2">
               <Button
                 variant={showRealized ? "secondary" : "outline"}
                 size="sm"
-                className={`h-8 text-xs justify-start ${showRealized ? "bg-green-500/20 border-green-500/50 text-green-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                className={`h-8 text-xs w-full justify-start ${showRealized ? "bg-green-500/20 border-green-500/50 text-green-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
                 onClick={() => setShowRealized(!showRealized)}
               >
-                {showRealized ? "✓" : ""} Show Realized PnL
+                {showRealized ? "✓" : ""} Show Realized
               </Button>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <ScrollArea className="flex-1">
         <div className="py-4 pr-4 pl-0">

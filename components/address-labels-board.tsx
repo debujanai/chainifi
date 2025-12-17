@@ -182,22 +182,18 @@ export function AddressLabelsBoard() {
               </DropdownMenu>
             </div>
           </div>
-        </div>
-      </div>
 
-      {filterOpen && (
-        <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Collapsible Filter Grid */}
+          <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
             {/* Category Filter */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Category</label>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="lg:col-span-8">
+              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5 flex-wrap gap-0.5">
                 {categories.map((cat) => (
                   <Button
                     key={cat}
-                    variant={categoryFilter === cat ? "secondary" : "outline"}
+                    variant="ghost"
                     size="sm"
-                    className={`h-7 text-xs ${categoryFilter === cat ? "bg-blue-500/20 border-blue-500/50 text-blue-300" : "border-[#20222f] text-gray-400 hover:bg-[#20222f]"}`}
+                    className={`h-7 text-[10px] px-3 rounded-sm ${categoryFilter === cat ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
                     onClick={() => setCategoryFilter(cat)}
                   >
                     {cat === "all" ? "All" : getCategoryLabel(cat)}
@@ -207,19 +203,18 @@ export function AddressLabelsBoard() {
             </div>
 
             {/* Label Filter */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Label Filter</label>
+            <div className="lg:col-span-3">
               <Input
                 value={labelFilter}
                 onChange={(e) => setLabelFilter(e.target.value)}
                 placeholder="Filter by label name"
-                className="h-8 bg-[#171a26] border-[#20222f] text-sm text-gray-200 placeholder:text-gray-500"
-                onBlur={() => load()}
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
+                onKeyDown={(e) => e.key === "Enter" && load()}
               />
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <ScrollArea className="flex-1">
         <div className="py-4 pr-4 pl-0">

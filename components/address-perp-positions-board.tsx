@@ -154,15 +154,6 @@ export function AddressPerpPositionsBoard() {
                 Filters
               </Button>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 text-xs font-normal hidden lg:flex ${filterOpen ? "bg-[#272936] text-white" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-                onClick={() => setFilterOpen((v) => !v)}
-              >
-                Filters
-              </Button>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
@@ -189,23 +180,19 @@ export function AddressPerpPositionsBoard() {
               </DropdownMenu>
             </div>
           </div>
-        </div>
-      </div>
 
-      {filterOpen && (
-        <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Collapsible Filter Grid */}
+          <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
             {/* Position Value Range */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Position Value USD</label>
-              <div className="flex items-center gap-2">
+            <div className="lg:col-span-3">
+              <div className="flex items-center gap-1">
                 <Input
                   type="number"
-                  placeholder="Min"
+                  placeholder="Min Position"
                   value={positionValueMin}
                   onChange={(e) => setPositionValueMin(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && load()}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
                 <span className="text-xs text-gray-500">-</span>
                 <Input
@@ -214,22 +201,21 @@ export function AddressPerpPositionsBoard() {
                   value={positionValueMax}
                   onChange={(e) => setPositionValueMax(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && load()}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
               </div>
             </div>
 
             {/* Unrealized PnL Range */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Unrealized PnL USD</label>
-              <div className="flex items-center gap-2">
+            <div className="lg:col-span-3">
+              <div className="flex items-center gap-1">
                 <Input
                   type="number"
-                  placeholder="Min"
+                  placeholder="Min PnL"
                   value={upnlMin}
                   onChange={(e) => setUpnlMin(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && load()}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
                 <span className="text-xs text-gray-500">-</span>
                 <Input
@@ -238,13 +224,13 @@ export function AddressPerpPositionsBoard() {
                   value={upnlMax}
                   onChange={(e) => setUpnlMax(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && load()}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
+                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 flex-1"
                 />
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <ScrollArea className="flex-1">
         <div className="py-4 pr-4 pl-0">

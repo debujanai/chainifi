@@ -216,42 +216,40 @@ export function AddressTransactionsBoard() {
           </div>
 
           {/* Collapsible Filter Grid */}
-          {filterOpen && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
-              {/* Volume Filter */}
-              <div className="lg:col-span-4 flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="Min Volume (USD)"
-                  value={minVolume || ""}
-                  onChange={(e) => setMinVolume(e.target.value ? parseFloat(e.target.value) : 0)}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 w-full"
-                />
-                <Input
-                  type="number"
-                  placeholder="Max Volume (USD)"
-                  value={maxVolume || ""}
-                  onChange={(e) => setMaxVolume(e.target.value ? parseFloat(e.target.value) : null)}
-                  className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 w-full"
-                />
-              </div>
-
-              {/* Hide Spam */}
-              <div className="lg:col-span-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-8 text-xs w-full justify-start ${hideSpam ? "text-yellow-500 bg-yellow-500/10" : "text-gray-400 hover:text-gray-200 bg-[#171a26] border border-[#20222f]"}`}
-                  onClick={() => setHideSpam(!hideSpam)}
-                >
-                  <div className="flex items-center">
-                    {/* Reusing Filter icon if available or just text/check */}
-                    {hideSpam ? "✓ " : ""} Hide Spam Tokens
-                  </div>
-                </Button>
-              </div>
+          <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
+            {/* Volume Filter */}
+            <div className="lg:col-span-4 flex gap-2">
+              <Input
+                type="number"
+                placeholder="Min Volume (USD)"
+                value={minVolume || ""}
+                onChange={(e) => setMinVolume(e.target.value ? parseFloat(e.target.value) : 0)}
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 w-full"
+              />
+              <Input
+                type="number"
+                placeholder="Max Volume (USD)"
+                value={maxVolume || ""}
+                onChange={(e) => setMaxVolume(e.target.value ? parseFloat(e.target.value) : null)}
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 w-full"
+              />
             </div>
-          )}
+
+            {/* Hide Spam */}
+            <div className="lg:col-span-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 text-xs w-full justify-start ${hideSpam ? "text-yellow-500 bg-yellow-500/10" : "text-gray-400 hover:text-gray-200 bg-[#171a26] border border-[#20222f]"}`}
+                onClick={() => setHideSpam(!hideSpam)}
+              >
+                <div className="flex items-center">
+                  {/* Reusing Filter icon if available or just text/check */}
+                  {hideSpam ? "✓ " : ""} Hide Spam Tokens
+                </div>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

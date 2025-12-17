@@ -92,150 +92,153 @@ export function FlowIntelligenceBoard() {
 
   const segments: SegmentItem[] = data
     ? [
-        {
-          name: "Whales",
-          netFlow: data.whale_net_flow_usd,
-          avgFlow: data.whale_avg_flow_usd,
-          walletCount: data.whale_wallet_count,
-          icon: "🐋",
-          color: "purple",
-        },
-        {
-          name: "Smart Traders",
-          netFlow: data.smart_trader_net_flow_usd,
-          avgFlow: data.smart_trader_avg_flow_usd,
-          walletCount: data.smart_trader_wallet_count,
-          icon: "🧠",
-          color: "blue",
-        },
-        {
-          name: "Exchanges",
-          netFlow: data.exchange_net_flow_usd,
-          avgFlow: data.exchange_avg_flow_usd,
-          walletCount: data.exchange_wallet_count,
-          icon: "🏦",
-          color: "yellow",
-        },
-        {
-          name: "Public Figures",
-          netFlow: data.public_figure_net_flow_usd,
-          avgFlow: data.public_figure_avg_flow_usd,
-          walletCount: data.public_figure_wallet_count,
-          icon: "⭐",
-          color: "pink",
-        },
-        {
-          name: "Top PnL",
-          netFlow: data.top_pnl_net_flow_usd,
-          avgFlow: data.top_pnl_avg_flow_usd,
-          walletCount: data.top_pnl_wallet_count,
-          icon: "📈",
-          color: "green",
-        },
-        {
-          name: "Fresh Wallets",
-          netFlow: data.fresh_wallets_net_flow_usd,
-          avgFlow: data.fresh_wallets_avg_flow_usd,
-          walletCount: data.fresh_wallets_wallet_count,
-          icon: "🆕",
-          color: "cyan",
-        },
-      ]
+      {
+        name: "Whales",
+        netFlow: data.whale_net_flow_usd,
+        avgFlow: data.whale_avg_flow_usd,
+        walletCount: data.whale_wallet_count,
+        icon: "🐋",
+        color: "purple",
+      },
+      {
+        name: "Smart Traders",
+        netFlow: data.smart_trader_net_flow_usd,
+        avgFlow: data.smart_trader_avg_flow_usd,
+        walletCount: data.smart_trader_wallet_count,
+        icon: "🧠",
+        color: "blue",
+      },
+      {
+        name: "Exchanges",
+        netFlow: data.exchange_net_flow_usd,
+        avgFlow: data.exchange_avg_flow_usd,
+        walletCount: data.exchange_wallet_count,
+        icon: "🏦",
+        color: "yellow",
+      },
+      {
+        name: "Public Figures",
+        netFlow: data.public_figure_net_flow_usd,
+        avgFlow: data.public_figure_avg_flow_usd,
+        walletCount: data.public_figure_wallet_count,
+        icon: "⭐",
+        color: "pink",
+      },
+      {
+        name: "Top PnL",
+        netFlow: data.top_pnl_net_flow_usd,
+        avgFlow: data.top_pnl_avg_flow_usd,
+        walletCount: data.top_pnl_wallet_count,
+        icon: "📈",
+        color: "green",
+      },
+      {
+        name: "Fresh Wallets",
+        netFlow: data.fresh_wallets_net_flow_usd,
+        avgFlow: data.fresh_wallets_avg_flow_usd,
+        walletCount: data.fresh_wallets_wallet_count,
+        icon: "🆕",
+        color: "cyan",
+      },
+    ]
     : [];
 
   return (
     <div className="flex-1 bg-[#141723] flex flex-col">
       <div className="border-b border-[#20222f] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
-              <span className="text-white font-normal">Flow Intelligence</span>
+              <span className="text-white font-normal text-sm">Flow Intelligence</span>
               <Button variant="ghost" size="icon" className="h-5 w-5">
                 <MoreHorizontal className="w-3 h-3 text-gray-400" />
               </Button>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 text-xs font-normal ${filterOpen ? "bg-[#272936] text-white" : "bg-[#20222f] hover:bg-[#272936] text-gray-300"}`}
-              onClick={() => setFilterOpen((v) => !v)}
-            >
-              Filters
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal">
-                  Timeframe: {timeframes.find((t) => t.value === timeframe)?.label || timeframe}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[10rem]">
-                {timeframes.map((tf) => (
-                  <DropdownMenuItem key={tf.value} onClick={() => setTimeframe(tf.value)}>
-                    {tf.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
 
-        {/* Token Address Input */}
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder="Enter token address (0x...)"
-            value={tokenAddress}
-            onChange={(e) => setTokenAddress(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
-            className="flex-1 h-8 text-xs bg-[#141723] border-[#20222f] text-white placeholder:text-gray-500"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal min-w-[100px]">
-                {chain.charAt(0).toUpperCase() + chain.slice(1)}
+        <div className="flex flex-col gap-3">
+          {/* Top Row: Token Address Input & Primary Actions */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Input
+                type="text"
+                placeholder="Enter token address (0x...)"
+                value={tokenAddress}
+                onChange={(e) => setTokenAddress(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && load()}
+                className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+                onClick={load}
+                disabled={loading}
+              >
+                {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Load"}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
-              {availableChains.map((c) => (
-                <DropdownMenuItem key={c} onClick={() => { setChain(c); }}>
-                  {c.charAt(0).toUpperCase() + c.slice(1)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-normal"
-            onClick={load}
-            disabled={loading}
-          >
-            {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Load"}
-          </Button>
-        </div>
-      </div>
+            </div>
 
-      {filterOpen && (
-        <div className="px-4 py-4 border-b border-[#20222f] bg-[#1a1c29]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Secondary Controls (Right): Toggles, Dropdowns */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                Filters
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
+                    {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  {availableChains.map((c) => (
+                    <DropdownMenuItem key={c} onClick={() => { setChain(c); }}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+                    Timeframe: {timeframes.find((t) => t.value === timeframe)?.label || timeframe}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem]">
+                  {timeframes.map((tf) => (
+                    <DropdownMenuItem key={tf.value} onClick={() => setTimeframe(tf.value)}>
+                      {tf.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Collapsible Filter Grid */}
+          <div className={`${filterOpen ? 'grid' : 'hidden'} lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3`}>
             {/* Whale Wallet Count Filter */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Whale Wallet Count (Min)</label>
+            <div className="lg:col-span-3">
               <Input
                 value={whaleWalletCountMin}
                 onChange={(e) => setWhaleWalletCountMin(e.target.value)}
-                placeholder="Min wallet count"
-                className="h-8 bg-[#171a26] border-[#20222f] text-sm text-gray-200 placeholder:text-gray-500"
-                onBlur={() => load()}
+                placeholder="Min Whale Wallet Count"
+                className="h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500"
               />
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <ScrollArea className="flex-1">
         <div className="p-4">
@@ -286,25 +289,25 @@ export function FlowIntelligenceBoard() {
                 </div>
                 {segments.map((segment, idx) => {
                   const isPositive = segment.netFlow >= 0;
-                  
+
                   return (
-                  <div
-                    key={idx}
-                    className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group"
-                  >
-                    <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[190px] pr-3 ml-0 pl-3 py-2.5 rounded-l">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                      </Button>
-                      <div className="flex items-center gap-2 min-w-[150px]">
-                        <div className="text-lg">{segment.icon}</div>
-                        <div className="text-sm text-white font-medium">{segment.name}</div>
+                    <div
+                      key={idx}
+                      className="relative flex items-center gap-3 pr-3 pl-0 py-2.5 bg-[#171a26] border border-[#20222f] rounded hover:bg-[#1c1e2b] hover:border-[#272936] group"
+                    >
+                      <div className="2xl:static 2xl:left-auto sticky left-0 z-10 bg-[#171a26] group-hover:bg-[#1c1e2b] flex items-center gap-2 min-w-[190px] pr-3 ml-0 pl-3 py-2.5 rounded-l">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                        </Button>
+                        <div className="flex items-center gap-2 min-w-[150px]">
+                          <div className="text-lg">{segment.icon}</div>
+                          <div className="text-sm text-white font-medium">{segment.name}</div>
+                        </div>
                       </div>
-                    </div>
 
                       {/* Spacer */}
                       <div className="flex-1"></div>

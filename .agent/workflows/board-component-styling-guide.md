@@ -9,8 +9,16 @@ This document outlines the styling patterns and layout conventions used in board
 ## Migrated Components
 
 The following components have been updated to follow this guide:
+- ✅ `address-balances-board.tsx` ⭐ **(Reference Component)**
 - ✅ `address-perp-trades-board.tsx`
 - ✅ `address-historical-balances-board.tsx`
+- ✅ `address-perp-positions-board.tsx`
+- ✅ `address-transactions-board.tsx`
+- ✅ `address-labels-board.tsx`
+- ✅ `pnl-board.tsx`
+- ✅ `counterparties-board.tsx`
+- ✅ `related-wallets-board.tsx`
+- ✅ `flow-intelligence-board.tsx`
 - ✅ `hyperliquid-leaderboard-board.tsx`
 - ✅ `token-screener-board.tsx`
 - ✅ `holders-board.tsx`
@@ -32,16 +40,11 @@ The following components have been updated to follow this guide:
 - ✅ `dcas-board.tsx`
 - ✅ `holdings-board.tsx`
 
-## Pending Components
+## Special Components
 
-Components that still need to be aligned:
-- ⏳ `address-balances-board.tsx`
-- ⏳ `address-perp-positions-board.tsx`
-- ⏳ `address-transactions-board.tsx`
-- ⏳ `pnl-board.tsx`
-- ⏳ `counterparties-board.tsx`
-- ⏳ `related-wallets-board.tsx`
-- ⏳ `address-labels-board.tsx`
+Components with intentionally different designs:
+- 🔷 `entity-name-search-board.tsx` - Search-only board with unique layout
+- 🔷 `issues-board.tsx` - Demo/example board
 
 ---
 
@@ -50,120 +53,183 @@ Components that still need to be aligned:
 ### Title Row
 ```tsx
 <div className="flex items-center justify-between mb-2">
-  <div className="flex items-center gap-2">
-    <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
-    <span className="text-white font-normal text-sm">Board Title</span>
-    <Button variant="ghost" size="icon" className="h-5 w-5">
-      <MoreHorizontal className="w-3 h-3 text-gray-400" />
-    </Button>
+  <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
+      <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px]">⚡</div>
+      <span className="text-white font-normal text-sm">Board Title</span>
+      <Button variant="ghost" size="icon" className="h-5 w-5">
+        <MoreHorizontal className="w-3 h-3 text-gray-400" />
+      </Button>
+    </div>
   </div>
 </div>
 ```
 
-### Controls Row with Primary Toggle on Left (Preferred Pattern)
-This is the **preferred pattern** for most board components. Primary toggles (chains, side, etc.) go on the left in a pill container, actions go on the right.
+### Controls Row (Preferred Pattern)
+This is the **preferred pattern** based on `address-balances-board.tsx`. Search input goes on the left, toggles and dropdowns go on the right.
 
 ```tsx
-<div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
-  {/* Primary Toggle Container (Left) - Chains, Side, etc. */}
-  <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
-    {["ethereum", "solana"].map((chain) => (
+<div className="flex flex-col gap-3">
+  {/* Top Row: Search & Primary Actions */}
+  <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+    {/* Search Input (Left) */}
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+      <Input
+        type="text"
+        placeholder={queryMode === "address" ? "0x..." : "Entity Name"}
+        value={queryMode === "address" ? address : entityName}
+        onChange={(e) => queryMode === "address" ? setAddress(e.target.value) : setEntityName(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && load()}
+        className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
+      />
       <Button
-        key={chain}
         variant="ghost"
         size="sm"
-        className={`h-7 text-[10px] px-3 rounded-sm ${
-          selectedChains[chain] 
-            ? "bg-[#20222f] text-gray-200 shadow-sm" 
-            : "text-gray-400 hover:text-gray-200"
-        }`}
-        onClick={() => setSelectedChains((prev) => ({ ...prev, [chain]: !prev[chain] }))}
+        className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+        onClick={load}
+        disabled={loading}
       >
-        {chain.charAt(0).toUpperCase() + chain.slice(1)}
+        {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
       </Button>
-    ))}
+    </div>
+
+    {/* Secondary Controls (Right): Toggles, Dropdowns */}
+    <div className="flex items-center gap-2 flex-wrap">
+      {/* Mobile Filter Toggle (hidden on lg) */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
+        onClick={() => setShowFilters(!showFilters)}
+      >
+        <Filter className="w-3 h-3 mr-2" />
+        Filters
+      </Button>
+
+      {/* Query Mode Toggle (Address/Entity) */}
+      <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`h-7 text-[10px] px-3 rounded-sm ${queryMode === "address" ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+          onClick={() => setQueryMode("address")}
+        >
+          Address
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`h-7 text-[10px] px-3 rounded-sm ${queryMode === "entity" ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+          onClick={() => setQueryMode("entity")}
+        >
+          Entity
+        </Button>
+      </div>
+
+      {/* Chain Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
+            {chain.charAt(0).toUpperCase() + chain.slice(1)}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[10rem]">
+          {availableChains.map((c) => (
+            <DropdownMenuItem key={c} onClick={() => setChain(c)}>
+              {c.charAt(0).toUpperCase() + c.slice(1)}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Sort Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+            Sort: {sortBy} {sortDirection === "DESC" ? "↓" : "↑"}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[12rem]">
+          <DropdownMenuItem onClick={() => setSortBy("value")}>Sort by Value</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setSortBy("amount")}>Sort by Amount</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
+            Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Group Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
+            Group: {groupBy}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[10rem]">
+          <DropdownMenuItem onClick={() => setGroupBy("chain")}>Group by Chain</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setGroupBy("value")}>Group by Value</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   </div>
 
-  {/* Action Buttons (Right) */}
-  <div className="flex items-center gap-2 flex-wrap">
-    {/* Refresh Button */}
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
-    >
-      Refresh
-    </Button>
-
-    {/* Mobile Filter Toggle (hidden on lg) */}
-    <Button
-      variant="outline"
-      size="sm"
-      className="lg:hidden h-8 px-3 text-xs border-[#20222f] bg-[#171a26] text-gray-300"
-    >
-      <Filter className="w-3 h-3 mr-2" />
-      Filters
-    </Button>
-
-    {/* Sort Dropdown */}
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
-          Sort: Field ↓
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[10rem]">
-        {/* Dropdown items */}
-      </DropdownMenuContent>
-    </DropdownMenu>
-
-    {/* Optional: Group Dropdown */}
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
-          Group: Chain
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[10rem]">
-        {/* Dropdown items */}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  </div>
+  {/* Collapsible Filter Grid (see Filter Grid Layout section) */}
 </div>
 ```
 
-**Toggle Container Variations:**
-- **Chains:** `["ethereum", "solana", "base", "arbitrum"]`
-- **Side (Perp):** Long (green) / Short (red) with colored active states
-- **Search Input:** For boards with search, put Input on left instead of toggle container
+**Controls Row Element Order (Left to Right):**
+1. **Left Side:**
+   - Search/Address Input (`flex-1 min-w-[200px]`)
+   - Refresh Button (blue styled)
 
-### Controls Row with Search Input on Left (Alternative)
-Use when the board has a search functionality (e.g., searching by trader address).
+2. **Right Side:**
+   - Mobile Filter Toggle (hidden on `lg`)
+   - Query Mode Toggle Pill (Address/Entity)
+   - Chain Dropdown
+   - Sort Dropdown
+   - Group Dropdown
+
+### Toggle Container (Pill Style)
+Used for binary or multi-option toggles like Address/Entity, Long/Short:
 
 ```tsx
-<div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
-  {/* Search Input (Left) */}
-  <div className="flex items-center gap-2 flex-1 min-w-0">
-    <Input
-      type="text"
-      placeholder="Search trader or address"
-      className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
-    />
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
-    >
-      Refresh
-    </Button>
-  </div>
-
-  {/* Action Buttons (Right) */}
-  <div className="flex items-center gap-2 flex-wrap">
-    {/* Mobile Filter Toggle, Sort, Group dropdowns */}
-  </div>
+<div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
+  <Button
+    variant="ghost"
+    size="sm"
+    className={`h-7 text-[10px] px-3 rounded-sm ${isActive ? "bg-[#20222f] text-gray-200 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
+    onClick={() => toggle()}
+  >
+    Option
+  </Button>
 </div>
 ```
+
+**Toggle Variations:**
+- **Address/Entity:** Query mode selection
+- **Long/Short (Perp):** Side toggle with green/red active states
+- **Chains (Multi-select):** All chains as toggle buttons
+
+### Chain Dropdown (Alternative to Chain Toggle)
+When there are many chains, use a dropdown instead of pill toggles:
+
+```tsx
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="outline" size="sm" className="h-8 text-xs border-[#20222f] bg-[#171a26] text-gray-300 hover:bg-[#20222f] hover:text-gray-200">
+      {chain.charAt(0).toUpperCase() + chain.slice(1)}
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end" className="min-w-[10rem]">
+    {availableChains.map((c) => (
+      <DropdownMenuItem key={c} onClick={() => setChain(c)}>
+        {c.charAt(0).toUpperCase() + c.slice(1)}
+      </DropdownMenuItem>
+    ))}
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
 
 
 ---
