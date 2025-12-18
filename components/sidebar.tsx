@@ -24,27 +24,9 @@ export function Sidebar() {
       `}
     >
       <div className="p-3 border-b border-[#20222f]">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2">
           <Image src="/logo.png" alt="ChainfiAI Logo" width={24} height={24} className="rounded-md" />
           <span className="text-sm font-medium text-white">ChainfiAI</span>
-          <Users className="w-4 h-4 text-gray-400 ml-auto" />
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            className="flex-1 justify-start gap-2 h-8 text-xs bg-[#20222f] hover:bg-[#272936] text-gray-300 font-normal"
-          >
-            <Plus className="w-3 h-3" />
-            New issue
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 bg-[#20222f] hover:bg-[#272936]"
-          >
-            <Search className="w-3 h-3 text-gray-300" />
-          </Button>
         </div>
       </div>
 

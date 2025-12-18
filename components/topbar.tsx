@@ -29,10 +29,8 @@ export function Topbar() {
 
         {/* Center brand */}
         <div className="flex items-center gap-2 select-none" aria-label="Application Brand">
-          <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-sm" />
-          </div>
-          <span className="text-sm font-medium text-white">Linear</span>
+          <img src="/logo.png" alt="ChainfiAI" className="w-6 h-6 rounded-md" />
+          <span className="text-sm font-medium text-white">ChainfiAI</span>
         </div>
 
         {/* Right hamburger - toggles properties panel */}
