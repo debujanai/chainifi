@@ -1,54 +1,66 @@
 import { NextResponse } from 'next/server';
 
+
+const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: number }> = {
+    'netflow': {
+        url: 'https://api.nansen.ai/api/v1/smart-money/netflow',
+        defaultBody: {
+            chains: ["all"],
+            pagination: { page: 1, per_page: 200 },
+            order_by: [{ direction: "DESC", field: "net_flow_24h_usd" }]
+        },
+        revalidate: 43200 // 12 hours
+    },
+    'holdings': {
+        url: 'https://api.nansen.ai/api/v1/smart-money/holdings',
+        defaultBody: {
+            chains: ["all"],
+            pagination: { page: 1, per_page: 500 }
+        },
+        revalidate: 43800
+    },
+    'dex-trades': {
+        url: 'https://api.nansen.ai/api/v1/smart-money/dex-trades',
+        defaultBody: {
+            chains: ["all"],
+            pagination: { page: 1, per_page: 500 }
+        },
+        revalidate: 44400
+    },
+    'perp-trades': {
+        url: 'https://api.nansen.ai/api/v1/smart-money/perp-trades',
+        defaultBody: {
+            pagination: { page: 1, per_page: 500 },
+            order_by: [{ field: "block_timestamp", direction: "DESC" }]
+        },
+        revalidate: 45000 // 12 hours + 30 mins
+    }
+};
+
 export async function POST(request: Request) {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type');
+    const type = searchParams.get('type') || 'netflow'; // Default to netflow
     const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
 
-    let url = 'https://api.nansen.ai/api/v1/smart-money/netflow';
-    let body: any = {
-        chains: ["all"],
-        pagination: {
-            page: 1,
-            per_page: 200
-        },
-        order_by: [
-            {
-                direction: "DESC",
-                field: "net_flow_24h_usd"
-            }
-        ]
-    };
-    let revalidateTime = 43200; // 12 hours
+    // 1. Get Configuration
+    const config = ENDPOINTS[type] || ENDPOINTS['netflow'];
 
-    // Handle Holdings Type
-    if (type === 'holdings') {
-        url = 'https://api.nansen.ai/api/v1/smart-money/holdings';
-        body = {
-            chains: ["all"],
-            pagination: {
-                page: 1,
-                per_page: 500
-            }
-        };
-        revalidateTime = 43800; // 12 hours + 10 minutes (offset)
-    }
+    // 2. Parse User Body
+    const reqBody = await request.json().catch(() => ({}));
 
-    // Handle Dex Trades Type
-    if (type === 'dex-trades') {
-        url = 'https://api.nansen.ai/api/v1/smart-money/dex-trades';
+    // 3. Merge Body: Use user params, or fallback to endpoint-specific defaults if pagination missing
+    // Logic: If user provides pagination, trust them. If not, inject defaults for this specific type.
+    let body = reqBody;
+    if (!body.pagination) {
         body = {
-            chains: ["all"],
-            pagination: {
-                page: 1,
-                per_page: 500
-            }
+            ...config.defaultBody, // Start with defaults
+            ...reqBody             // Override with any other filters user provided
         };
-        revalidateTime = 44400; // 12 hours + 20 minutes (offset)
+        // Note: defaultBody contains the correct pagination/sorting for THIS type
     }
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(config.url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -56,11 +68,11 @@ export async function POST(request: Request) {
                 "apiKey": apiKey
             },
             body: JSON.stringify(body),
-            next: { revalidate: revalidateTime },
+            next: { revalidate: config.revalidate },
         });
 
         if (!response.ok) {
-            console.error("Upstream API Error:", response.status, response.statusText);
+            console.error(`Upstream API Error [${type}]:`, response.status, response.statusText);
             return NextResponse.json(
                 { error: `External API error: ${response.statusText}` },
                 { status: response.status }
