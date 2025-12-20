@@ -61,6 +61,7 @@ export function PerpTradesBoard() {
   const [page, setPage] = useState<number>(1);
   const [perPage, setPerPage] = useState<number>(10);
   const [isLastPage, setIsLastPage] = useState<boolean>(true);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
   // Filters
   const [side, setSide] = useState<string | undefined>("Long");
@@ -112,8 +113,12 @@ export function PerpTradesBoard() {
     if (type) result = result.filter(t => t.type === type);
     if (action) result = result.filter(t => t.action === action);
     if (tokenSymbol.trim()) {
-      const sym = tokenSymbol.trim().toUpperCase();
-      result = result.filter(t => t.token_symbol.includes(sym));
+      const query = tokenSymbol.trim().toLowerCase();
+      result = result.filter(t =>
+        t.token_symbol.toLowerCase().includes(query) ||
+        t.trader_address.toLowerCase().includes(query) ||
+        (t.trader_address_label && t.trader_address_label.toLowerCase().includes(query))
+      );
     }
     if (onlyNewPositions) {
       result = result.filter(t => t.action === "Open" || t.action === "Add");
@@ -138,7 +143,10 @@ export function PerpTradesBoard() {
       return 0;
     });
 
-    // 3. Paginate
+    // 3. Store total count before pagination
+    setTotalCount(result.length);
+
+    // 4. Paginate
     const start = (page - 1) * perPage;
     const end = start + perPage;
     const paginated = result.slice(start, end);
@@ -201,7 +209,7 @@ export function PerpTradesBoard() {
               <Input
                 value={tokenSymbol}
                 onChange={(e) => { setTokenSymbol(e.target.value); setPage(1); }}
-                placeholder="Search token..."
+                placeholder="Search token, trader address or label..."
                 className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
               />
               <Button
@@ -227,21 +235,14 @@ export function PerpTradesBoard() {
                 Filters
               </Button>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 px-3 text-xs text-gray-400 border-[#20222f] bg-[#171a26] hover:text-gray-200">
-                    Sort: {sortBy.replace(/_/g, " ")} {sortDirection === "DESC" ? "↓" : "↑"} ▼
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[14rem] bg-[#1a1d2d] border-[#20222f] text-gray-200">
-                  <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setSortBy("block_timestamp")}>Sort by Time</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setSortBy("value_usd")}>Sort by Value</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setSortBy("token_amount")}>Sort by Amount</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
-                    Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-8 px-3 text-xs border-[#20222f] bg-[#171a26] hover:text-gray-200 ${onlyNewPositions ? "text-green-400 border-green-500/50" : "text-gray-400"}`}
+                onClick={() => setOnlyNewPositions(!onlyNewPositions)}
+              >
+                New Only
+              </Button>
             </div>
           </div>
 
@@ -316,18 +317,6 @@ export function PerpTradesBoard() {
                 ))}
               </div>
 
-              {/* New Positions Only */}
-              <div className="flex items-center rounded-md border border-[#20222f] bg-[#171a26] p-0.5">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-7 text-[10px] px-3 rounded-sm ${onlyNewPositions ? "bg-[#20222f] text-green-400 shadow-sm" : "text-gray-400 hover:text-gray-200"}`}
-                  onClick={() => setOnlyNewPositions(!onlyNewPositions)}
-                >
-                  New Only
-                </Button>
-              </div>
-
               {/* Value USD Range */}
               <div className="flex items-center gap-1">
                 <Input
@@ -374,7 +363,7 @@ export function PerpTradesBoard() {
                   <div className="sticky left-0 z-10 bg-[#141723] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${side === "Long" ? "bg-green-500" : side === "Short" ? "bg-red-500" : "bg-gray-500"}`} />
                     <span className="text-sm font-medium text-white">{side || "All Trades"}</span>
-                    <span className="text-xs text-gray-500">{trades.length} items</span>
+                    <span className="text-xs text-gray-500">{totalCount}</span>
                   </div>
                 </div>
 
@@ -382,142 +371,157 @@ export function PerpTradesBoard() {
                   {/* Header Row */}
                   <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
                     <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[160px] py-2 pl-7 pr-3 rounded-l border-y border-l border-transparent">
-                      <div className="h-6 w-6" />
-                      <div className="min-w-[100px]">Trader</div>
+                      <div className="h-7 w-7" />
+                      <div className="min-w-[60px]">Trader</div>
                     </div>
                     <div className="flex-1 flex items-center justify-end min-w-0 gap-0 py-2 pr-3 border-y border-r border-transparent">
-                      <div className="w-[160px] text-center">Address</div>
-                      <div className="w-[70px] text-center">Coin</div>
-                      <div className="w-[70px] text-center">Side</div>
-                      <div className="w-[70px] text-center">Action</div>
+                      <div className="w-[160px] text-center shrink-0">Address</div>
+                      <div className="w-[70px] text-center shrink-0">Coin</div>
+                      <div className="w-[70px] text-center shrink-0">Side</div>
+                      <div className="w-[70px] text-center shrink-0">Action</div>
 
                       <button
                         onClick={() => { if (sortBy === "token_amount") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("token_amount"); }}
-                        className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "token_amount" ? "text-blue-400" : ""}`}
+                        className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors shrink-0 ${sortBy === "token_amount" ? "text-blue-400" : ""}`}
                       >
                         Amount {sortBy === "token_amount" && (sortDirection === "DESC" ? "↓" : "↑")}
                       </button>
 
                       <button
                         onClick={() => { if (sortBy === "price_usd") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("price_usd"); }}
-                        className={`w-[90px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "price_usd" ? "text-blue-400" : ""}`}
+                        className={`w-[90px] text-center cursor-pointer hover:text-gray-300 transition-colors shrink-0 ${sortBy === "price_usd" ? "text-blue-400" : ""}`}
                       >
                         Price {sortBy === "price_usd" && (sortDirection === "DESC" ? "↓" : "↑")}
                       </button>
 
                       <button
                         onClick={() => { if (sortBy === "value_usd") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("value_usd"); }}
-                        className={`w-[90px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "value_usd" ? "text-blue-400" : ""}`}
+                        className={`w-[90px] text-center cursor-pointer hover:text-gray-300 transition-colors shrink-0 ${sortBy === "value_usd" ? "text-blue-400" : ""}`}
                       >
                         Value {sortBy === "value_usd" && (sortDirection === "DESC" ? "↓" : "↑")}
                       </button>
 
-                      <div className="w-[70px] text-center">Type</div>
-                      <div className="w-[80px] text-center">Tx</div>
+                      <div className="w-[70px] text-center shrink-0">Type</div>
+                      <div className="w-[80px] text-center shrink-0">Tx</div>
 
                       <button
                         onClick={() => { if (sortBy === "block_timestamp") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("block_timestamp"); }}
-                        className={`w-[130px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "block_timestamp" ? "text-blue-400" : ""}`}
+                        className={`w-[130px] text-center cursor-pointer hover:text-gray-300 transition-colors shrink-0 ${sortBy === "block_timestamp" ? "text-blue-400" : ""}`}
                       >
                         Time {sortBy === "block_timestamp" && (sortDirection === "DESC" ? "↓" : "↑")}
                       </button>
                     </div>
                   </div>
 
-                  {trades.map((t, idx) => (
-                    <div
-                      key={`${t.transaction_hash}-${idx}`}
-                      className="flex items-stretch group whitespace-nowrap"
-                    >
-                      {/* Sticky Column - Trader Label */}
-                      <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
-                        <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[160px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                          </Button>
-                          <div className="text-xs min-w-0">
-                            <div className="font-medium text-blue-300 truncate">{t.trader_address_label ? t.trader_address_label.replace(/Trader \[[^\]]+\]/, '').trim() : "Smart Money"}</div>
+                  {trades.map((t, idx) => {
+                    // Generate consistent gradient color based on trader address
+                    const hash = t.trader_address.slice(2, 8);
+                    const hue1 = parseInt(hash.slice(0, 2), 16) % 360;
+                    const hue2 = (hue1 + 40) % 360;
+                    const gradient = `linear-gradient(135deg, hsl(${hue1}, 70%, 50%), hsl(${hue2}, 70%, 40%))`;
+
+                    return (
+                      <div
+                        key={`${t.transaction_hash}-${idx}`}
+                        className="flex items-stretch group whitespace-nowrap"
+                      >
+                        {/* Sticky Column - Trader Label */}
+                        <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                          <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[160px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                            </Button>
+                            {/* Gradient Circle Icon */}
+                            <div
+                              className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-[10px] text-white font-bold"
+                              style={{ background: gradient }}
+                            >
+                              {((t.trader_address_label || "SM").replace(/[^a-zA-Z]/g, '').slice(0, 1) || "S").toUpperCase()}
+                            </div>
+                            <span className="text-xs text-blue-300 font-medium whitespace-nowrap truncate">
+                              {t.trader_address_label ? t.trader_address_label.replace(/Trader \[[^\]]+\]/, '').trim() : "Smart Money"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="flex-1 flex items-center justify-end min-w-0 gap-0 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150">
+                          {/* Address + Copy */}
+                          <div className="w-[160px] flex justify-center items-center relative group/addr shrink-0">
+                            <span className="text-[10px] text-gray-500 font-mono">{t.trader_address.slice(0, 4)}...{t.trader_address.slice(-4)}</span>
+                            <Button
+                              onClick={() => navigator.clipboard.writeText(t.trader_address)}
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-4 h-4 w-4 opacity-0 group-hover/addr:opacity-100 transition-opacity"
+                              title="Copy Address"
+                            >
+                              <Copy className="h-3 w-3 text-gray-400" />
+                            </Button>
+                          </div>
+
+                          {/* Coin */}
+                          <div className="w-[70px] flex justify-center">
+                            <span className="text-xs text-white font-medium">{t.token_symbol}</span>
+                          </div>
+
+                          {/* Side */}
+                          <div className="w-[70px] flex justify-center">
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] h-5 px-2 rounded-full ${t.side === "Long" ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}
+                            >
+                              {t.side}
+                            </Badge>
+                          </div>
+
+                          {/* Action */}
+                          <div className="w-[70px] flex justify-center">
+                            <span className="text-xs text-gray-300">{t.action}</span>
+                          </div>
+
+                          {/* Amount */}
+                          <div className="w-[80px] flex justify-center">
+                            <span className="text-xs text-sky-400 font-medium tabular-nums">{t.token_amount.toLocaleString()}</span>
+                          </div>
+
+                          {/* Price */}
+                          <div className="w-[90px] flex justify-center">
+                            <span className="text-xs text-orange-300 tabular-nums">{formatUSD(t.price_usd)}</span>
+                          </div>
+
+                          {/* Value */}
+                          <div className="w-[90px] flex justify-center">
+                            <span className="text-xs text-emerald-400 font-medium tabular-nums">{formatUSD(t.value_usd)}</span>
+                          </div>
+
+                          {/* Type */}
+                          <div className="w-[70px] flex justify-center">
+                            <span className="text-xs text-gray-400">{t.type}</span>
+                          </div>
+
+                          {/* Tx Hash */}
+                          <div className="w-[80px] flex justify-center">
+                            <a href={`https://arbiscan.io/tx/${t.transaction_hash}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 font-mono hover:underline" title={t.transaction_hash}>
+                              {t.transaction_hash.slice(0, 4)}...
+                            </a>
+                          </div>
+
+                          {/* Time */}
+                          <div className="w-[130px] flex justify-center">
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-gray-500" />
+                              <span className="text-xs text-gray-300">{formatTime(t.block_timestamp)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-
-                      {/* Main Content */}
-                      <div className="flex-1 flex items-center justify-end min-w-0 gap-0 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150">
-                        {/* Address + Copy */}
-                        <div className="w-[160px] flex justify-center items-center gap-1 group/addr">
-                          <span className="text-[10px] text-gray-500 font-mono">{t.trader_address.slice(0, 4)}...{t.trader_address.slice(-4)}</span>
-                          <Button
-                            onClick={() => navigator.clipboard.writeText(t.trader_address)}
-                            variant="ghost"
-                            size="icon"
-                            className="h-4 w-4 opacity-0 group-hover/addr:opacity-100 transition-opacity"
-                            title="Copy Address"
-                          >
-                            <Copy className="h-3 w-3 text-gray-400" />
-                          </Button>
-                        </div>
-
-                        {/* Coin */}
-                        <div className="w-[70px] flex justify-center">
-                          <span className="text-xs text-white font-medium">{t.token_symbol}</span>
-                        </div>
-
-                        {/* Side */}
-                        <div className="w-[70px] flex justify-center">
-                          <Badge
-                            variant="secondary"
-                            className={`text-[10px] h-5 px-2 rounded-full ${t.side === "Long" ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}
-                          >
-                            {t.side}
-                          </Badge>
-                        </div>
-
-                        {/* Action */}
-                        <div className="w-[70px] flex justify-center">
-                          <span className="text-xs text-gray-300">{t.action}</span>
-                        </div>
-
-                        {/* Amount */}
-                        <div className="w-[80px] flex justify-center">
-                          <span className="text-xs text-white">{t.token_amount}</span>
-                        </div>
-
-                        {/* Price */}
-                        <div className="w-[90px] flex justify-center">
-                          <span className="text-xs text-gray-300">{formatUSD(t.price_usd)}</span>
-                        </div>
-
-                        {/* Value */}
-                        <div className="w-[90px] flex justify-center">
-                          <span className="text-xs text-white font-medium">{formatUSD(t.value_usd)}</span>
-                        </div>
-
-                        {/* Type */}
-                        <div className="w-[70px] flex justify-center">
-                          <span className="text-xs text-gray-400">{t.type}</span>
-                        </div>
-
-                        {/* Tx Hash */}
-                        <div className="w-[80px] flex justify-center">
-                          <a href={`https://arbiscan.io/tx/${t.transaction_hash}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 font-mono hover:underline" title={t.transaction_hash}>
-                            {t.transaction_hash.slice(0, 4)}...
-                          </a>
-                        </div>
-
-                        {/* Time */}
-                        <div className="w-[130px] flex justify-center">
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-gray-500" />
-                            <span className="text-xs text-gray-300">{formatTime(t.block_timestamp)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

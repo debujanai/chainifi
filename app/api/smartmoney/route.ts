@@ -34,6 +34,14 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
             order_by: [{ field: "block_timestamp", direction: "DESC" }]
         },
         revalidate: 45000 // 12 hours + 30 mins
+    },
+    'dcas': {
+        url: 'https://api.nansen.ai/api/v1/smart-money/dcas',
+        defaultBody: {
+            pagination: { page: 1, per_page: 50 },
+            order_by: [{ field: "dca_created_at", direction: "DESC" }]
+        },
+        revalidate: 43200 // 12 hours
     }
 };
 
