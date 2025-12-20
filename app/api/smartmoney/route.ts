@@ -42,6 +42,18 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
             order_by: [{ field: "dca_created_at", direction: "DESC" }]
         },
         revalidate: 43200 // 12 hours
+    },
+    'historical-holdings': {
+        url: 'https://api.nansen.ai/api/v1/smart-money/historical-holdings',
+        defaultBody: {
+            date_range: {
+                from: new Date(Date.now() - 17 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+                to: new Date().toISOString().slice(0, 10)
+            },
+            chains: ["ethereum"],
+            pagination: { page: 1, per_page: 1000 }
+        },
+        revalidate: 43200 // 12 hours (twice daily)
     }
 };
 
