@@ -69,6 +69,7 @@ export function TikTokIcon({ className = "", size = 16 }: IconProps) {
 
 // Helper component to render the right icon based on platform
 export function SocialIcon({ platform, className = "", size = 10 }: { platform: string; className?: string; size?: number }) {
+    if (!platform) return null;
     const p = platform.toLowerCase();
 
     if (p === 'twitter' || p === 'x') return <XIcon className={className} size={size} />;

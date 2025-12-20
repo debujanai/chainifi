@@ -68,11 +68,16 @@ export function NetflowsBoard() {
     const [totalCount, setTotalCount] = useState<number>(0);
     const itemsPerPage = 10;
 
-    const [sortBy, setSortBy] = useState<"7d" | "24h" | "30d">("7d");
+    const [sortBy, setSortBy] = useState<"7d" | "24h" | "30d" | "traders" | "age" | "mcap">("7d");
     const [sortDirection, setSortDirection] = useState<"DESC" | "ASC">("DESC");
 
     const [availableChains, setAvailableChains] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>("");
+    const [mcapFilter, setMcapFilter] = useState<"all" | "large" | "mid" | "small" | "micro">("all");
+
+    // Sector Filter State
+    const [availableSectors, setAvailableSectors] = useState<string[]>([]);
+    const [selectedSector, setSelectedSector] = useState<string | null>(null);
 
 
 
@@ -125,6 +130,15 @@ export function NetflowsBoard() {
                         const uniqueChains = Array.from(new Set(data.map(d => d.chain))).sort();
                         setAvailableChains(uniqueChains);
 
+                        // Extract Unique Sectors
+                        const sectors = new Set<string>();
+                        data.forEach(d => {
+                            if (Array.isArray(d.token_sectors)) {
+                                d.token_sectors.forEach(s => sectors.add(s));
+                            }
+                        });
+                        setAvailableSectors(Array.from(sectors).sort());
+
                         // Default: Select first chain
                         if (uniqueChains.length > 0) {
                             setSelectedChain(uniqueChains[0]);
@@ -152,6 +166,13 @@ export function NetflowsBoard() {
             processed = processed.filter(item => item.chain === selectedChain);
         }
 
+        // Filter Sector
+        if (selectedSector) {
+            processed = processed.filter(item =>
+                item.token_sectors && item.token_sectors.includes(selectedSector)
+            );
+        }
+
         // Filter Search
         if (searchTerm.trim()) {
             const lower = searchTerm.toLowerCase();
@@ -161,11 +182,27 @@ export function NetflowsBoard() {
             );
         }
 
+        // Filter Mcap
+        if (mcapFilter !== "all") {
+            processed = processed.filter(item => {
+                const mcap = item.market_cap_usd || 0;
+                if (mcapFilter === "large") return mcap > 1_000_000_000;
+                if (mcapFilter === "mid") return mcap >= 50_000_000 && mcap <= 1_000_000_000;
+                if (mcapFilter === "small") return mcap >= 1_000_000 && mcap < 50_000_000;
+                if (mcapFilter === "micro") return mcap < 1_000_000;
+                return true;
+            });
+        }
+
         // Sort
         processed.sort((a, b) => {
-            const field = sortBy === "24h" ? "net_flow_24h_usd" : sortBy === "30d" ? "net_flow_30d_usd" : "net_flow_7d_usd";
-            const valA = a[field] || 0;
-            const valB = b[field] || 0;
+            let valA = 0, valB = 0;
+            if (sortBy === "24h") { valA = a.net_flow_24h_usd || 0; valB = b.net_flow_24h_usd || 0; }
+            else if (sortBy === "30d") { valA = a.net_flow_30d_usd || 0; valB = b.net_flow_30d_usd || 0; }
+            else if (sortBy === "traders") { valA = a.trader_count || 0; valB = b.trader_count || 0; }
+            else if (sortBy === "age") { valA = a.token_age_days || 0; valB = b.token_age_days || 0; }
+            else if (sortBy === "mcap") { valA = a.market_cap_usd || 0; valB = b.market_cap_usd || 0; }
+            else { valA = a.net_flow_7d_usd || 0; valB = b.net_flow_7d_usd || 0; }
             return sortDirection === "DESC" ? valB - valA : valA - valB;
         });
 
@@ -184,7 +221,8 @@ export function NetflowsBoard() {
         const paginated = processed.slice(start, start + itemsPerPage);
 
         setFilteredData(paginated);
-    }, [rawData, page, selectedChain, searchTerm, sortBy, sortDirection]);
+        setFilteredData(paginated);
+    }, [rawData, page, selectedChain, searchTerm, sortBy, sortDirection, mcapFilter, selectedSector]);
 
     return (
         <div className="flex-1 bg-[#141723] flex flex-col">
@@ -213,9 +251,9 @@ export function NetflowsBoard() {
                                 className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
                             />
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-8 px-3 text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-normal border border-blue-500/20"
+                                className="h-8 px-3 text-xs bg-[#171a26] border-[#20222f] text-gray-400 hover:text-gray-200"
                                 onClick={() => { setLoading(true); window.location.reload(); }}
                                 disabled={loading}
                             >
@@ -236,20 +274,19 @@ export function NetflowsBoard() {
                                 Filters
                             </Button>
 
-                            {/* Sort Dropdown */}
+                            {/* Market Cap Filter Dropdown */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-400 hover:text-gray-200">
-                                        Sort: {sortBy.toUpperCase()} {sortDirection === "DESC" ? "↓" : "↑"}
+                                    <Button variant="outline" size="sm" className="h-8 text-xs text-gray-400 border-[#20222f] bg-[#171a26] hover:text-gray-200">
+                                        Cap: {mcapFilter === "all" ? "All" : mcapFilter.charAt(0).toUpperCase() + mcapFilter.slice(1)} ▼
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="min-w-[12rem]">
-                                    <DropdownMenuItem onClick={() => setSortBy("24h")}>Sort by 24h</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setSortBy("7d")}>Sort by 7d</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setSortBy("30d")}>Sort by 30d</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setSortDirection(sortDirection === "DESC" ? "ASC" : "DESC")}>
-                                        Direction: {sortDirection === "DESC" ? "Descending" : "Ascending"}
-                                    </DropdownMenuItem>
+                                <DropdownMenuContent align="end" className="min-w-[12rem] bg-[#1a1d2d] border-[#20222f] text-gray-200">
+                                    <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setMcapFilter("all")}>All Caps</DropdownMenuItem>
+                                    <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setMcapFilter("large")}>Large Caps {'>'} $1B</DropdownMenuItem>
+                                    <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setMcapFilter("mid")}>Mid Caps $50M - $1B</DropdownMenuItem>
+                                    <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setMcapFilter("small")}>Small Caps $1M - $50M</DropdownMenuItem>
+                                    <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setMcapFilter("micro")}>Micro Caps {'<'} $1M</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -257,22 +294,50 @@ export function NetflowsBoard() {
 
                     {/* Filter Grid - Collapsible on Mobile, Always visible on Desktop */}
                     <div className={`${filterOpen ? 'block' : 'hidden'} lg:block`}>
-                        {/* Chain Options - Wrapped inside a single container, width fits content */}
-                        <div className="flex flex-wrap items-center gap-1 rounded-md border border-[#20222f] bg-[#171a26] p-0.5 w-fit">
-                            {availableChains.map(chain => (
-                                <Button
-                                    key={chain}
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`h-7 text-[10px] px-3 rounded-sm transition-all ${selectedChain === chain
-                                        ? "bg-[#20222f] text-gray-200 shadow-sm"
-                                        : "text-gray-400 hover:text-gray-200"
-                                        }`}
-                                    onClick={() => { setSelectedChain(chain); setPage(1); }}
-                                >
-                                    {chain.charAt(0).toUpperCase() + chain.slice(1)}
-                                </Button>
-                            ))}
+                        {/* Chain Options - Mobile: Tags | Desktop: Segmented Control */}
+                        <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap items-center w-full lg:w-auto p-0.5 gap-1.5 lg:gap-0 lg:rounded-md lg:border lg:border-[#20222f] lg:bg-[#171a26]">
+                                {availableChains.map(chain => (
+                                    <Button
+                                        key={chain}
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`
+                                            h-7 text-[10px] px-3 
+                                            /* Mobile Styles (Tags) */
+                                            rounded border border-[#20222f] bg-[#171a26] text-gray-400
+                                            
+                                            /* Desktop Styles (Segmented) */
+                                            lg:rounded-sm lg:border-0 lg:bg-transparent
+                                            
+                                            /* Selected State Handling */
+                                            ${selectedChain === chain
+                                                ? "bg-[#20222f] border-[#303240] text-gray-200 shadow-sm lg:bg-[#20222f] lg:text-gray-200"
+                                                : "hover:text-gray-200 hover:bg-[#20222f] lg:hover:bg-transparent lg:hover:text-gray-200"}
+                                        `}
+                                        onClick={() => { setSelectedChain(chain); setPage(1); }}
+                                    >
+                                        {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                                    </Button>
+                                ))}
+                            </div>
+
+                            {/* Dynamic Sector Filter */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-[34px] text-[10px] px-3 bg-[#171a26] border-[#20222f] text-gray-400 hover:text-gray-200">
+                                        Niche: {selectedSector || "All"} ▼
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="max-h-[300px] overflow-y-auto min-w-[12rem] bg-[#1a1d2d] border-[#20222f] text-gray-200 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#2a2d3d] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                                    <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setSelectedSector(null)}>All Niches</DropdownMenuItem>
+                                    {availableSectors.map(s => (
+                                        <DropdownMenuItem key={s} className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => { setSelectedSector(s); setPage(1); }}>
+                                            {s}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
                 </div>
@@ -311,18 +376,48 @@ export function NetflowsBoard() {
                                     {/* Header Row */}
                                     <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
                                         <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[160px] py-2 pl-7 pr-3 rounded-l border-y border-l border-transparent">
-                                            <div className="h-6 w-6" />
+                                            <div className="h-7 w-7" />
                                             <div className="min-w-[60px]">Symbol</div>
                                         </div>
                                         <div className="flex-1 flex items-center justify-end min-w-0 gap-0 py-2 pr-3 border-y border-r border-transparent">
                                             <div className="w-[160px] text-center">Address</div>
-                                            <div className="w-[250px] text-center">Sectors</div>
-                                            <div className="w-[80px] text-center">24h</div>
-                                            <div className="w-[80px] text-center">7d</div>
-                                            <div className="w-[80px] text-center">30d</div>
-                                            <div className="w-[60px] text-center">Traders</div>
-                                            <div className="w-[50px] text-center">Age</div>
-                                            <div className="w-[80px] text-center">MCap</div>
+                                            <div className="w-[250px] text-center">Niche</div>
+                                            <button
+                                                onClick={() => { if (sortBy === "24h") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("24h"); setPage(1); }}
+                                                className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "24h" ? "text-blue-400" : ""}`}
+                                            >
+                                                24h {sortBy === "24h" && (sortDirection === "DESC" ? "↓" : "↑")}
+                                            </button>
+                                            <button
+                                                onClick={() => { if (sortBy === "7d") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("7d"); setPage(1); }}
+                                                className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "7d" ? "text-blue-400" : ""}`}
+                                            >
+                                                7d {sortBy === "7d" && (sortDirection === "DESC" ? "↓" : "↑")}
+                                            </button>
+                                            <button
+                                                onClick={() => { if (sortBy === "30d") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("30d"); setPage(1); }}
+                                                className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "30d" ? "text-blue-400" : ""}`}
+                                            >
+                                                30d {sortBy === "30d" && (sortDirection === "DESC" ? "↓" : "↑")}
+                                            </button>
+                                            <button
+                                                onClick={() => { if (sortBy === "traders") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("traders"); setPage(1); }}
+                                                className={`w-[60px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "traders" ? "text-blue-400" : ""}`}
+                                            >
+                                                Traders {sortBy === "traders" && (sortDirection === "DESC" ? "↓" : "↑")}
+                                            </button>
+                                            <button
+                                                onClick={() => { if (sortBy === "age") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("age"); setPage(1); }}
+                                                className={`w-[50px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "age" ? "text-blue-400" : ""}`}
+                                            >
+                                                Age {sortBy === "age" && (sortDirection === "DESC" ? "↓" : "↑")}
+                                            </button>
+                                            <button
+                                                onClick={() => { if (sortBy === "mcap") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("mcap"); setPage(1); }}
+                                                className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "mcap" ? "text-blue-400" : ""}`}
+                                            >
+                                                Mkt Cap {sortBy === "mcap" && (sortDirection === "DESC" ? "↓" : "↑")}
+                                            </button>
                                             <div className="w-[100px] text-center">Links</div>
                                         </div>
                                     </div>
@@ -350,7 +445,7 @@ export function NetflowsBoard() {
                                                                 <MoreHorizontal className="w-4 h-4 text-gray-400" />
                                                             </Button>
                                                             {/* Logo */}
-                                                            <div className="h-6 w-6 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
+                                                            <div className="h-7 w-7 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
                                                                 {tokenMetadata[`${item.chain}-${item.token_address}`]?.logo ? (
                                                                     <img
                                                                         src={tokenMetadata[`${item.chain}-${item.token_address}`].logo!}
@@ -358,7 +453,7 @@ export function NetflowsBoard() {
                                                                         className="w-full h-full object-cover"
                                                                     />
                                                                 ) : (
-                                                                    <div className="text-[8px] text-gray-500">{item.token_symbol.slice(0, 1)}</div>
+                                                                    <div className="text-[10px] text-gray-500">{item.token_symbol.slice(0, 1)}</div>
                                                                 )}
                                                             </div>
                                                             <span className="text-xs text-blue-300 font-medium whitespace-nowrap">
