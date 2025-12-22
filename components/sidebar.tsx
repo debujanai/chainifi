@@ -5,10 +5,8 @@ import { ChevronDown, Plus, Search, TrendingUp, Wallet, Clock, ArrowLeftRight, B
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SmartMoneyPanel } from "@/components/smart-money-panel";
 import Link from "next/link";
 import { useResponsiveNav } from "./responsive-nav-context";
-import { ALLOWED_SECTIONS, ALLOWED_SMART_MONEY_PAGES } from "@/lib/config";
 
 export function Sidebar() {
   const { leftOpen } = useResponsiveNav();
@@ -35,356 +33,184 @@ export function Sidebar() {
         <div className="px-2 mt-4">
           <div className="text-xs font-normal text-gray-500 mb-2 px-2">Smart Money</div>
           <div className="ml-2">
-            {ALLOWED_SMART_MONEY_PAGES.includes("/netflows") && (
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/netflows">
-                  <TrendingUp className="w-4 h-4 text-green-400" />
-                  Netflows
-                </Link>
-              </Button>
-            )}
-            {ALLOWED_SMART_MONEY_PAGES.includes("/holdings") && (
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/holdings">
-                  <Wallet className="w-4 h-4 text-blue-400" />
-                  Holdings
-                </Link>
-              </Button>
-            )}
-            {ALLOWED_SMART_MONEY_PAGES.includes("/historical-holdings") && (
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/historical-holdings">
-                  <Clock className="w-4 h-4 text-purple-400" />
-                  Historical Holdings
-                </Link>
-              </Button>
-            )}
-            {ALLOWED_SMART_MONEY_PAGES.includes("/dex-trades") && (
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/dex-trades">
-                  <ArrowLeftRight className="w-4 h-4 text-orange-400" />
-                  DEX Trades
-                </Link>
-              </Button>
-            )}
-            {ALLOWED_SMART_MONEY_PAGES.includes("/perp-trades") && (
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/perp-trades">
-                  <BarChart3 className="w-4 h-4 text-red-400" />
-                  Perp Trades
-                </Link>
-              </Button>
-            )}
-            {ALLOWED_SMART_MONEY_PAGES.includes("/dcas") && (
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/dcas">
-                  <Repeat className="w-4 h-4 text-cyan-400" />
-                  Jupiter DCAs
-                </Link>
-              </Button>
-            )}
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/netflows">
+                <TrendingUp className="w-4 h-4 text-green-400" /> Netflows
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/holdings">
+                <Wallet className="w-4 h-4 text-blue-400" /> Holdings
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/historical-holdings">
+                <Clock className="w-4 h-4 text-purple-400" /> Historical Holdings
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/dex-trades">
+                <ArrowLeftRight className="w-4 h-4 text-orange-400" /> DEX Trades
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/perp-trades">
+                <BarChart3 className="w-4 h-4 text-red-400" /> Perp Trades
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/dcas">
+                <Repeat className="w-4 h-4 text-cyan-400" /> Jupiter DCAs
+              </Link>
+            </Button>
           </div>
         </div>
 
-        {ALLOWED_SECTIONS.includes("Profiler") && (
-          <div className="px-2 mt-4">
-            <div className="text-xs font-normal text-gray-500 mb-2 px-2">Profiler</div>
-            <div className="ml-2">
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/address-balances">
-                  <Wallet className="w-4 h-4 text-blue-400" />
-                  Address Current Balances
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/address-historical-balances">
-                  <Clock className="w-4 h-4 text-purple-400" />
-                  Address Historical Balances
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/address-transactions">
-                  <FileText className="w-4 h-4 text-indigo-400" />
-                  Address Transactions
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/counterparties">
-                  <Users className="w-4 h-4 text-pink-400" />
-                  Address Counterparties
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/related-wallets">
-                  <Network className="w-4 h-4 text-teal-400" />
-                  Address Related Wallets
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/pnl">
-                  <DollarSign className="w-4 h-4 text-yellow-400" />
-                  Address PnL & Trade Performance
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/address-labels">
-                  <Tag className="w-4 h-4 text-rose-400" />
-                  Address Labels
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/entity-name-search">
-                  <Search className="w-4 h-4 text-violet-400" />
-                  Entity Name Search
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/address-perp-positions">
-                  <BarChart3 className="w-4 h-4 text-red-400" />
-                  Address Perp Positions
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/address-perp-trades">
-                  <TrendingUp className="w-4 h-4 text-orange-400" />
-                  Address Perp Trades
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/hyperliquid-leaderboard">
-                  <Trophy className="w-4 h-4 text-amber-400" />
-                  Hyperliquid Address Leaderboard
-                </Link>
-              </Button>
-            </div>
+        <div className="px-2 mt-4">
+          <div className="text-xs font-normal text-gray-500 mb-2 px-2">Profiler</div>
+          <div className="ml-2">
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/address-balances">
+                <Wallet className="w-4 h-4 text-blue-400" /> Address Current Balances
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/address-historical-balances">
+                <Clock className="w-4 h-4 text-purple-400" /> Address Historical Balances
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/address-transactions">
+                <FileText className="w-4 h-4 text-indigo-400" /> Address Transactions
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/address-perp-positions">
+                <BarChart3 className="w-4 h-4 text-red-400" /> Address Perp Positions
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/address-perp-trades">
+                <ArrowUpDown className="w-4 h-4 text-emerald-400" /> Address Perp Trades
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/related-wallets">
+                <Network className="w-4 h-4 text-cyan-400" /> Related Wallets
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/counterparties">
+                <Users className="w-4 h-4 text-pink-400" /> Counterparties
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/address-labels">
+                <Tag className="w-4 h-4 text-amber-400" /> Address Labels
+              </Link>
+            </Button>
           </div>
-        )}
+        </div>
 
-        {ALLOWED_SECTIONS.includes("Token God Mode") && (
-          <div className="px-2 mt-4">
-            <div className="text-xs font-normal text-gray-500 mb-2 px-2">Token God Mode</div>
-            <div className="ml-2">
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/token-screener">
-                  <Filter className="w-4 h-4 text-slate-400" />
-                  Token Screener
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/flow-intelligence">
-                  <Activity className="w-4 h-4 text-emerald-400" />
-                  Flow Intelligence
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/holders">
-                  <Users className="w-4 h-4 text-sky-400" />
-                  Holders
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/flows">
-                  <ArrowRight className="w-4 h-4 text-lime-400" />
-                  Flows
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/who-bought-sold">
-                  <ArrowUpDown className="w-4 h-4 text-fuchsia-400" />
-                  Who Bought/Sold
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/tgm-dex-trades">
-                  <ArrowLeftRight className="w-4 h-4 text-orange-400" />
-                  DEX Trades
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/tgm-transfers">
-                  <Send className="w-4 h-4 text-blue-400" />
-                  Token Transfers
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/tgm-jup-dca">
-                  <Repeat className="w-4 h-4 text-cyan-400" />
-                  Jupiter DCAs
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/tgm-pnl-leaderboard">
-                  <Trophy className="w-4 h-4 text-amber-400" />
-                  PnL Leaderboard
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/perp-screener">
-                  <Filter className="w-4 h-4 text-slate-400" />
-                  Perp Screener
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/tgm-perp-pnl-leaderboard">
-                  <Trophy className="w-4 h-4 text-amber-400" />
-                  Perp PnL Leaderboard
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/tgm-perp-positions">
-                  <BarChart3 className="w-4 h-4 text-red-400" />
-                  Perp Positions
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/tgm-perp-trades">
-                  <TrendingUp className="w-4 h-4 text-orange-400" />
-                  Perp Trades
-                </Link>
-              </Button>
-            </div>
+        <div className="px-2 mt-4">
+          <div className="text-xs font-normal text-gray-500 mb-2 px-2">Token God Mode</div>
+          <div className="ml-2">
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/token-screener">
+                <Filter className="w-4 h-4 text-violet-400" /> Token Screener
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/holders">
+                <Users className="w-4 h-4 text-blue-400" /> Holders
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/flows">
+                <Activity className="w-4 h-4 text-emerald-400" /> Flows
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/tgm-transfers">
+                <ArrowRight className="w-4 h-4 text-indigo-400" /> Transfers
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/tgm-dex-trades">
+                <ArrowUpDown className="w-4 h-4 text-orange-400" /> DEX Trades
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/tgm-jup-dca">
+                <Repeat className="w-4 h-4 text-cyan-400" /> Jupiter DCAs
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/who-bought-sold">
+                <DollarSign className="w-4 h-4 text-rose-400" /> Who Bought/Sold
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/tgm-pnl-leaderboard">
+                <Trophy className="w-4 h-4 text-amber-400" /> PnL Leaderboard
+              </Link>
+            </Button>
+            <div className="text-[10px] font-medium text-gray-500 mt-2 mb-1 px-2 uppercase tracking-wider">Perps</div>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/perp-screener">
+                <Filter className="w-4 h-4 text-red-400" /> Perp Screener
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/tgm-perp-positions">
+                <BarChart3 className="w-4 h-4 text-blue-400" /> Perp Positions
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/tgm-perp-trades">
+                <ArrowUpDown className="w-4 h-4 text-emerald-400" /> Perp Trades
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/tgm-perp-pnl-leaderboard">
+                <Trophy className="w-4 h-4 text-amber-400" /> Perp PnL Leaderboard
+              </Link>
+            </Button>
           </div>
-        )}
+        </div>
 
-        {ALLOWED_SECTIONS.includes("Portfolio") && (
-          <div className="px-2 mt-4">
-            <div className="text-xs font-normal text-gray-500 mb-2 px-2">Portfolio</div>
-            <div className="ml-2">
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal"
-              >
-                <Link href="/portfolio-defi-holdings">
-                  <Wallet className="w-4 h-4 text-blue-400" />
-                  Portfolio DeFi Holdings
-                </Link>
-              </Button>
-            </div>
+        <div className="px-2 mt-4 mb-4">
+          <div className="text-xs font-normal text-gray-500 mb-2 px-2">Portfolio</div>
+          <div className="ml-2">
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/pnl">
+                <TrendingUp className="w-4 h-4 text-green-400" /> Realised PnL
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/portfolio-defi-holdings">
+                <Wallet className="w-4 h-4 text-blue-400" /> DeFi Holdings
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/flow-intelligence">
+                <Activity className="w-4 h-4 text-emerald-400" /> Flow Intelligence
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/entity-name-search">
+                <Search className="w-4 h-4 text-gray-400" /> Entity Search
+              </Link>
+            </Button>
           </div>
-        )}
-
+        </div>
       </ScrollArea>
+
+      <div className="p-2 border-t border-[#20222f] lg:hidden">
+        <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm text-gray-400 hover:text-white hover:bg-[#20222f]">
+          <Send className="w-4 h-4" /> Feedback
+        </Button>
+      </div>
     </aside>
   );
 }

@@ -404,12 +404,6 @@ export function HoldingsBoard() {
                         Value {sortBy === "value_usd" && (sortDirection === "DESC" ? "↓" : "↑")}
                       </button>
                       <button
-                        onClick={() => { if (sortBy === "balance_24h_percent_change") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("balance_24h_percent_change"); setPage(1); }}
-                        className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "balance_24h_percent_change" ? "text-blue-400" : ""}`}
-                      >
-                        24h % {sortBy === "balance_24h_percent_change" && (sortDirection === "DESC" ? "↓" : "↑")}
-                      </button>
-                      <button
                         onClick={() => { if (sortBy === "holders_count") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("holders_count"); setPage(1); }}
                         className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "holders_count" ? "text-blue-400" : ""}`}
                       >
@@ -546,12 +540,6 @@ export function HoldingsBoard() {
                             <span className="text-xs text-white font-medium">{formatUSD(item.value_usd)}</span>
                           </div>
 
-                          {/* 24h Change */}
-                          <div className="w-[80px] flex justify-center">
-                            <span className={`text-xs font-semibold ${item.balance_24h_percent_change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                              {formatPercent(item.balance_24h_percent_change)}
-                            </span>
-                          </div>
 
                           {/* Holders */}
                           <div className="w-[80px] flex justify-center">
