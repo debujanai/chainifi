@@ -25,7 +25,7 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
             chains: ["all"],
             pagination: { page: 1, per_page: 1000 }
         },
-        revalidate: 44400
+        revalidate: 3600 // 1 hour
     },
     'perp-trades': {
         url: 'https://api.nansen.ai/api/v1/smart-money/perp-trades',
