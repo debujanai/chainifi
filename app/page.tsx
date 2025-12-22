@@ -11,7 +11,7 @@ export default function Home() {
       <div className="flex-1 min-w-0">
         {isProduction ? <DexTradesBoard /> : <IssuesBoard />}
       </div>
-      {!isProduction && <PropertiesPanel />}
+      <PropertiesPanel />
     </div>
   );
 }
