@@ -155,27 +155,6 @@ export function Sidebar() {
                 <Trophy className="w-4 h-4 text-amber-400" /> PnL Leaderboard
               </Link>
             </Button>
-            <div className="text-[10px] font-medium text-gray-500 mt-2 mb-1 px-2 uppercase tracking-wider">Perps</div>
-            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
-              <Link href="/perp-screener">
-                <Filter className="w-4 h-4 text-red-400" /> Perp Screener
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
-              <Link href="/tgm-perp-positions">
-                <BarChart3 className="w-4 h-4 text-blue-400" /> Perp Positions
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
-              <Link href="/tgm-perp-trades">
-                <ArrowUpDown className="w-4 h-4 text-emerald-400" /> Perp Trades
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
-              <Link href="/tgm-perp-pnl-leaderboard">
-                <Trophy className="w-4 h-4 text-amber-400" /> Perp PnL Leaderboard
-              </Link>
-            </Button>
           </div>
         </div>
 
