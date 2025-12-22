@@ -68,16 +68,19 @@ export async function POST(request: Request) {
     // 2. Parse User Body
     const reqBody = await request.json().catch(() => ({}));
 
-    // 3. Merge Body: Use user params, or fallback to endpoint-specific defaults if pagination missing
-    // Logic: If user provides pagination, trust them. If not, inject defaults for this specific type.
-    let body = reqBody;
-    if (!body.pagination) {
-        body = {
-            ...config.defaultBody, // Start with defaults
-            ...reqBody             // Override with any other filters user provided
-        };
-        // Note: defaultBody contains the correct pagination/sorting for THIS type
-    }
+    // 3. Merge Body: Use user params, but always enforce per_page: 1000
+    // Logic: Start with defaults, override with user params, then force pagination settings
+    const body = {
+        ...config.defaultBody,
+        ...reqBody
+    };
+
+    // Explicitly handle pagination to ensure per_page is 1000
+    body.pagination = {
+        ...(config.defaultBody.pagination || {}),
+        ...(reqBody.pagination || {}),
+        per_page: 1000
+    };
 
     try {
         const response = await fetch(config.url, {
