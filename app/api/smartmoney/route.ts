@@ -60,7 +60,7 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
 export async function POST(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'netflow'; // Default to netflow
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
+    const apiKey = process.env.API_KEY || "";
 
     // 1. Get Configuration
     const config = ENDPOINTS[type] || ENDPOINTS['netflow'];
