@@ -12,8 +12,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Project Solar Sailer - Linear',
-  description: 'Project management interface',
+  title: 'ChainfiAI',
+  description: 'Predict the Unseen',
+  icons: {
+    icon: '/logo.png',
+  },
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };
 
