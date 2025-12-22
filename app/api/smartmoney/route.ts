@@ -6,7 +6,7 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
         url: 'https://api.nansen.ai/api/v1/smart-money/netflow',
         defaultBody: {
             chains: ["all"],
-            pagination: { page: 1, per_page: 200 },
+            pagination: { page: 1, per_page: 1000 },
             order_by: [{ direction: "DESC", field: "net_flow_24h_usd" }]
         },
         revalidate: 43200 // 12 hours
@@ -15,7 +15,7 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
         url: 'https://api.nansen.ai/api/v1/smart-money/holdings',
         defaultBody: {
             chains: ["all"],
-            pagination: { page: 1, per_page: 500 }
+            pagination: { page: 1, per_page: 1000 }
         },
         revalidate: 43800
     },
@@ -23,14 +23,14 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
         url: 'https://api.nansen.ai/api/v1/smart-money/dex-trades',
         defaultBody: {
             chains: ["all"],
-            pagination: { page: 1, per_page: 500 }
+            pagination: { page: 1, per_page: 1000 }
         },
         revalidate: 44400
     },
     'perp-trades': {
         url: 'https://api.nansen.ai/api/v1/smart-money/perp-trades',
         defaultBody: {
-            pagination: { page: 1, per_page: 500 },
+            pagination: { page: 1, per_page: 1000 },
             order_by: [{ field: "block_timestamp", direction: "DESC" }]
         },
         revalidate: 45000 // 12 hours + 30 mins
@@ -38,7 +38,7 @@ const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: num
     'dcas': {
         url: 'https://api.nansen.ai/api/v1/smart-money/dcas',
         defaultBody: {
-            pagination: { page: 1, per_page: 50 },
+            pagination: { page: 1, per_page: 1000 },
             order_by: [{ field: "dca_created_at", direction: "DESC" }]
         },
         revalidate: 43200 // 12 hours
