@@ -262,15 +262,29 @@ export function DexTradesBoard() {
     const total = processed.length;
     setTotalPages(Math.ceil(total / itemsPerPage) || 1);
 
+    // Calculate TOTAL counts for each section from the FULL processed set
+    const sectionTotalCounts: Record<string, number> = {};
+    for (const item of processed) {
+      let key = groupBy === "chain" ? (item.chain || "Other") : (item.trader_address_label || "Other");
+      if (groupBy === "chain") {
+        key = key.charAt(0).toUpperCase() + key.slice(1);
+      }
+      sectionTotalCounts[key] = (sectionTotalCounts[key] || 0) + 1;
+    }
+
     // Adjust page
     const safePage = Math.min(Math.max(1, page), Math.ceil(total / itemsPerPage) || 1);
     if (page !== safePage) setPage(safePage);
 
     const paginated = processed.slice((safePage - 1) * itemsPerPage, safePage * itemsPerPage);
     setFilteredData(paginated);
-    setSections(groupTrades(paginated, groupBy));
 
-    setSections(groupTrades(paginated, groupBy));
+    // Create sections from paginated data, but inject TOTAL counts
+    const paginatedSections = groupTrades(paginated, groupBy).map(s => ({
+      ...s,
+      count: sectionTotalCounts[s.section] || s.count
+    }));
+    setSections(paginatedSections);
 
   }, [rawData, selectedChain, selectedLabel, mcapFilter, searchTerm, sortBy, sortDirection, groupBy, page]);
 
@@ -480,16 +494,16 @@ export function DexTradesBoard() {
                         Value {sortBy === "value" && (sortDirection === "DESC" ? "↓" : "↑")}
                       </button>
                       <button
-                        onClick={() => { if (sortBy === "bought") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("bought"); setPage(1); }}
-                        className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "bought" ? "text-blue-400" : ""}`}
-                      >
-                        Bought {sortBy === "bought" && (sortDirection === "DESC" ? "↓" : "↑")}
-                      </button>
-                      <button
                         onClick={() => { if (sortBy === "sold") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("sold"); setPage(1); }}
                         className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "sold" ? "text-blue-400" : ""}`}
                       >
                         Sold {sortBy === "sold" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <button
+                        onClick={() => { if (sortBy === "bought") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("bought"); setPage(1); }}
+                        className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "bought" ? "text-blue-400" : ""}`}
+                      >
+                        Bought {sortBy === "bought" && (sortDirection === "DESC" ? "↓" : "↑")}
                       </button>
                       <div className="w-[120px] text-center">TX</div>
                       <button
@@ -522,78 +536,14 @@ export function DexTradesBoard() {
                               <MoreHorizontal className="w-4 h-4 text-gray-400" />
                             </Button>
 
-                            {/* Bought Token Popover */}
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
-                                  <div className="relative w-7 h-7 flex-shrink-0">
-                                    {metaBought?.logo ? (
-                                      <img src={metaBought.logo} alt={item.token_bought_symbol} className="w-7 h-7 rounded-full object-cover bg-[#20222f]" />
-                                    ) : (
-                                      <div className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-[10px] font-bold border border-green-500/30">
-                                        {item.token_bought_symbol.slice(0, 1)}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <span className="text-xs text-green-400 font-medium">{item.token_bought_symbol}</span>
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent side="top" align="start" className="w-64 p-3 bg-[#1c1e2b] border-[#272936]">
-                                <div className="flex flex-col gap-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 flex-shrink-0">
-                                      {metaBought?.logo ? (
-                                        <img src={metaBought.logo} alt={item.token_bought_symbol} className="w-10 h-10 rounded-full object-cover" />
-                                      ) : (
-                                        <div className="w-10 h-10 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-sm font-bold border border-green-500/30">
-                                          {item.token_bought_symbol.slice(0, 2)}
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div>
-                                      <div className="text-sm font-medium text-white">{item.token_bought_symbol}</div>
-                                      <div className="text-xs text-gray-400">{item.chain} • {item.token_bought_age_days ?? "-"}d old</div>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2 p-2 bg-[#141723] rounded border border-[#20222f]">
-                                    <span className="text-xs text-gray-400 font-mono flex-1 truncate">{item.token_bought_address}</span>
-                                    <button onClick={() => navigator.clipboard.writeText(item.token_bought_address)} className="p-1 hover:bg-[#20222f] rounded">
-                                      <Copy className="w-3 h-3 text-gray-500 hover:text-gray-300" />
-                                    </button>
-                                    <a href={`https://${item.chain === 'ethereum' ? 'etherscan.io' : item.chain === 'solana' ? 'solscan.io' : `${item.chain}scan.com`}/token/${item.token_bought_address}`} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-[#20222f] rounded">
-                                      <ExternalLink className="w-3 h-3 text-gray-500 hover:text-gray-300" />
-                                    </a>
-                                  </div>
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-400">Market Cap</span>
-                                    <span className="text-sky-400 font-medium">{formatMarketCap(item.token_bought_market_cap)}</span>
-                                  </div>
-                                  {(metaBought?.websites?.length || metaBought?.socials?.length) && (
-                                    <div className="flex items-center gap-2 pt-2 border-t border-[#20222f]">
-                                      {metaBought?.websites?.[0] && (
-                                        <a href={metaBought.websites[0].url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#141723] rounded hover:bg-[#20222f] transition-colors">
-                                          <Globe className="w-4 h-4 text-gray-400 hover:text-blue-400" />
-                                        </a>
-                                      )}
-                                      {metaBought?.socials?.map((social: any, i: number) => (
-                                        <a key={i} href={social.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#141723] rounded hover:bg-[#20222f] transition-colors text-gray-400 hover:text-sky-400">
-                                          <SocialIcon platform={social.platform || social.type || ''} size={16} />
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-
-                            <ArrowRight className="w-3 h-3 text-gray-500" />
-
                             {/* Sold Token Popover */}
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
                                   <div className="relative w-7 h-7 flex-shrink-0">
-                                    {metaSold?.logo ? (
+                                    {(item.token_sold_symbol.toUpperCase() === "ETH" || item.token_sold_address.toLowerCase() === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") ? (
+                                      <img src="/eth-logo.png" alt="ETH" className="w-7 h-7 rounded-full object-cover bg-[#20222f]" />
+                                    ) : metaSold?.logo ? (
                                       <img src={metaSold.logo} alt={item.token_sold_symbol} className="w-7 h-7 rounded-full object-cover bg-[#20222f]" />
                                     ) : (
                                       <div className="w-7 h-7 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-[10px] font-bold border border-red-500/30">
@@ -608,7 +558,9 @@ export function DexTradesBoard() {
                                 <div className="flex flex-col gap-3">
                                   <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 flex-shrink-0">
-                                      {metaSold?.logo ? (
+                                      {(item.token_sold_symbol.toUpperCase() === "ETH" || item.token_sold_address.toLowerCase() === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") ? (
+                                        <img src="/eth-logo.png" alt="ETH" className="w-10 h-10 rounded-full object-cover" />
+                                      ) : metaSold?.logo ? (
                                         <img src={metaSold.logo} alt={item.token_sold_symbol} className="w-10 h-10 rounded-full object-cover" />
                                       ) : (
                                         <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-sm font-bold border border-red-500/30">
@@ -642,6 +594,76 @@ export function DexTradesBoard() {
                                         </a>
                                       )}
                                       {metaSold?.socials?.map((social: any, i: number) => (
+                                        <a key={i} href={social.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#141723] rounded hover:bg-[#20222f] transition-colors text-gray-400 hover:text-sky-400">
+                                          <SocialIcon platform={social.platform || social.type || ''} size={16} />
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+
+                            <ArrowRight className="w-3 h-3 text-gray-500" />
+
+                            {/* Bought Token Popover */}
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity">
+                                  <div className="relative w-7 h-7 flex-shrink-0">
+                                    {(item.token_bought_symbol.toUpperCase() === "ETH" || item.token_bought_address.toLowerCase() === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") ? (
+                                      <img src="/eth-logo.png" alt="ETH" className="w-7 h-7 rounded-full object-cover bg-[#20222f]" />
+                                    ) : metaBought?.logo ? (
+                                      <img src={metaBought.logo} alt={item.token_bought_symbol} className="w-7 h-7 rounded-full object-cover bg-[#20222f]" />
+                                    ) : (
+                                      <div className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-[10px] font-bold border border-green-500/30">
+                                        {item.token_bought_symbol.slice(0, 1)}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-green-400 font-medium">{item.token_bought_symbol}</span>
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent side="top" align="start" className="w-64 p-3 bg-[#1c1e2b] border-[#272936]">
+                                <div className="flex flex-col gap-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 flex-shrink-0">
+                                      {(item.token_bought_symbol.toUpperCase() === "ETH" || item.token_bought_address.toLowerCase() === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") ? (
+                                        <img src="/eth-logo.png" alt="ETH" className="w-10 h-10 rounded-full object-cover" />
+                                      ) : metaBought?.logo ? (
+                                        <img src={metaBought.logo} alt={item.token_bought_symbol} className="w-10 h-10 rounded-full object-cover" />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-sm font-bold border border-green-500/30">
+                                          {item.token_bought_symbol.slice(0, 2)}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium text-white">{item.token_bought_symbol}</div>
+                                      <div className="text-xs text-gray-400">{item.chain} • {item.token_bought_age_days ?? "-"}d old</div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 p-2 bg-[#141723] rounded border border-[#20222f]">
+                                    <span className="text-xs text-gray-400 font-mono flex-1 truncate">{item.token_bought_address}</span>
+                                    <button onClick={() => navigator.clipboard.writeText(item.token_bought_address)} className="p-1 hover:bg-[#20222f] rounded">
+                                      <Copy className="w-3 h-3 text-gray-500 hover:text-gray-300" />
+                                    </button>
+                                    <a href={`https://${item.chain === 'ethereum' ? 'etherscan.io' : item.chain === 'solana' ? 'solscan.io' : `${item.chain}scan.com`}/token/${item.token_bought_address}`} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-[#20222f] rounded">
+                                      <ExternalLink className="w-3 h-3 text-gray-500 hover:text-gray-300" />
+                                    </a>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-400">Market Cap</span>
+                                    <span className="text-sky-400 font-medium">{formatMarketCap(item.token_bought_market_cap)}</span>
+                                  </div>
+                                  {(metaBought?.websites?.length || metaBought?.socials?.length) && (
+                                    <div className="flex items-center gap-2 pt-2 border-t border-[#20222f]">
+                                      {metaBought?.websites?.[0] && (
+                                        <a href={metaBought.websites[0].url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#141723] rounded hover:bg-[#20222f] transition-colors">
+                                          <Globe className="w-4 h-4 text-gray-400 hover:text-blue-400" />
+                                        </a>
+                                      )}
+                                      {metaBought?.socials?.map((social: any, i: number) => (
                                         <a key={i} href={social.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#141723] rounded hover:bg-[#20222f] transition-colors text-gray-400 hover:text-sky-400">
                                           <SocialIcon platform={social.platform || social.type || ''} size={16} />
                                         </a>
@@ -698,17 +720,17 @@ export function DexTradesBoard() {
                             </span>
                           </div>
 
-                          {/* Bought Amount */}
-                          <div className="w-[80px] flex justify-center">
-                            <span className="text-xs text-green-400 truncate">
-                              {item.token_bought_amount >= 1000000 ? `${(item.token_bought_amount / 1000000).toFixed(1)}M` : item.token_bought_amount >= 1000 ? `${(item.token_bought_amount / 1000).toFixed(1)}K` : item.token_bought_amount.toFixed(2)}
-                            </span>
-                          </div>
-
                           {/* Sold Amount */}
                           <div className="w-[80px] flex justify-center">
                             <span className="text-xs text-red-400 truncate">
                               {item.token_sold_amount >= 1000000 ? `${(item.token_sold_amount / 1000000).toFixed(1)}M` : item.token_sold_amount >= 1000 ? `${(item.token_sold_amount / 1000).toFixed(1)}K` : item.token_sold_amount.toFixed(4)}
+                            </span>
+                          </div>
+
+                          {/* Bought Amount */}
+                          <div className="w-[80px] flex justify-center">
+                            <span className="text-xs text-green-400 truncate">
+                              {item.token_bought_amount >= 1000000 ? `${(item.token_bought_amount / 1000000).toFixed(1)}M` : item.token_bought_amount >= 1000 ? `${(item.token_bought_amount / 1000).toFixed(1)}K` : item.token_bought_amount.toFixed(2)}
                             </span>
                           </div>
 
