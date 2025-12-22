@@ -425,22 +425,7 @@ export function DexTradesBoard() {
                 ))}
               </div>
 
-              {/* Dynamic Label Filter (Replaces hardcoded Labels) */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-[34px] text-[10px] px-3 bg-[#171a26] border-[#20222f] text-gray-400 hover:text-gray-200">
-                    Label: {selectedLabel || "All"} ▼
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="max-h-[300px] overflow-y-auto min-w-[12rem] bg-[#1a1d2d] border-[#20222f] text-gray-200 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#2a2d3d] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-                  <DropdownMenuItem className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => setSelectedLabel(null)}>All Labels</DropdownMenuItem>
-                  {availableLabels.map(s => (
-                    <DropdownMenuItem key={s} className="hover:bg-[#252836] focus:bg-[#252836] cursor-pointer" onClick={() => { setSelectedLabel(s); setPage(1); }}>
-                      {s}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+
 
               {/* Value and Age filters removed */}
 
