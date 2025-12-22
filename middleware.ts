@@ -12,7 +12,8 @@ const SMART_MONEY_ROUTES = [
 ];
 
 export function middleware(request: NextRequest) {
-    const isProduction = process.env.NEXT_PUBLIC_APP_MODE === 'production';
+    const mode = (process.env.NEXT_PUBLIC_APP_MODE || '').trim().toLowerCase();
+    const isProduction = mode === 'production';
 
     if (isProduction) {
         const { pathname } = request.nextUrl;
