@@ -1,6 +1,5 @@
-
 import { HoldingsBoard } from "@/components/holdings-board";
 
-export default function HoldingsPage() {
+export default function Page() {
   return <HoldingsBoard />;
 }
