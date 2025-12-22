@@ -4,12 +4,9 @@ import type { NextRequest } from 'next/server';
 
 const SMART_MONEY_ROUTES = [
     '/',
-    '/netflows',
     '/holdings',
-    '/historical-holdings',
     '/dex-trades',
     '/perp-trades',
-    '/dcas',
     '/api/smartmoney',
     '/api/token-metadata',
 ];

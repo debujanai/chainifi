@@ -9,4 +9,11 @@ if (typeof window !== 'undefined') {
     console.log("DEBUG: APP_MODE is:", mode, "isProduction:", isProduction);
 }
 
-export const ALLOWED_SECTIONS = isProduction ? ['Smart Money'] : ['Smart Money', 'Profiler', 'Token God Mode', 'Portfolio'];
+// In production, we only want these specific sub-pages visible
+export const ALLOWED_SMART_MONEY_PAGES = isProduction
+    ? ['/holdings', '/dex-trades', '/perp-trades']
+    : ['/netflows', '/holdings', '/historical-holdings', '/dex-trades', '/perp-trades', '/dcas'];
+
+export const ALLOWED_SECTIONS = isProduction
+    ? ['Smart Money']
+    : ['Smart Money', 'Profiler', 'Token God Mode', 'Portfolio'];

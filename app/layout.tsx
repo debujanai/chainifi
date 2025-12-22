@@ -5,6 +5,8 @@ import { ResponsiveNavProvider } from '@/components/responsive-nav-context';
 import { Topbar } from '@/components/topbar';
 import { MobileOverlay } from '@/components/mobile-overlay';
 import { RightToggle } from '@/components/right-toggle';
+import { Sidebar } from '@/components/sidebar';
+import { PropertiesPanel } from '@/components/properties-panel';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,7 +34,13 @@ export default function RootLayout({
           <Topbar />
           <MobileOverlay />
           <RightToggle />
-          <div className="lg:pt-0 pt-14">{children}</div>
+          <div className="flex min-h-screen bg-[#141723] lg:pt-0 pt-14">
+            <Sidebar />
+            <main className="flex-1 min-w-0 flex flex-col">
+              {children}
+            </main>
+            <PropertiesPanel />
+          </div>
         </ResponsiveNavProvider>
       </body>
     </html>
