@@ -1,42 +1,89 @@
 import { NextResponse } from "next/server";
 
-const API_KEY = process.env.WHALE_ALERT_API_KEY;
-const BASE_URL = "https://api.whale-alert.io/v1";
+const API_KEY = process.env.DEX_API;
+const BASE_URL = "https://api.dexcheck.ai/api/v1/blockchain/whale-tracker";
+
+// Types for the DexCheck API response
+interface DexCheckTransaction {
+    side: "buy" | "sell";
+    usd_price: number;
+    pair_id: string;
+    tx_hash: string;
+    amount_usd: number;
+    pair: string;
+    epoch_time: number;
+    exchange: string;
+    maker: string;
+    base_id: string;
+    base_name: string;
+    base_symbol: string;
+    quote_name: string;
+    quote_symbol: string;
+    token_qty: number;
+    pair_created: number;
+    mcap: number;
+}
 
 export async function GET(request: Request) {
-    if (!API_KEY) {
-        return NextResponse.json(
-            { error: "API key not configured" },
-            { status: 500 }
-        );
-    }
-
-    const { searchParams } = new URL(request.url);
-
-    // Default to 24 hours ago if not specified
-    // Use a very short 10-minute window to capture the absolute latest activity.
-    // The API sorts oldest-to-newest, so a large window fills the limit with old data.
-    const now = Math.floor(Date.now() / 1000);
-    const start = searchParams.get("start") || (now - 600).toString();
-    const limit = searchParams.get("limit") || "100";
-    const minValue = searchParams.get("min_value") || "500000";
-
     try {
-        const response = await fetch(
-            `${BASE_URL}/transactions?api_key=${API_KEY}&start=${start}&limit=${limit}&min_value=${minValue}`,
-            {
-                next: { revalidate: 30 }, // Server-side cache for 30 seconds
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(`Whale Alert API error: ${response.statusText}`);
+        if (!API_KEY) {
+            return NextResponse.json(
+                { error: "DEX_CHECK_API_KEY not configured" },
+                { status: 500 }
+            );
         }
 
-        const data = await response.json();
-        return NextResponse.json(data);
+        const { searchParams } = new URL(request.url);
+        // User requested "top 100", simple pagination or just 100 items. 
+        // The API default page size is 1000 items/page theoretically, but docs say "page" param.
+        // We'll just fetch page 1 for both chains.
+
+        // Fetch for ETH and SOL in parallel
+        const [ethRes, solRes] = await Promise.all([
+            fetch(`${BASE_URL}?chain=eth&page=1`, {
+                headers: {
+                    "x-api-key": API_KEY,
+                    "accept": "application/json"
+                },
+                next: { revalidate: 3600 }, // 1 hour cache
+            }),
+            fetch(`${BASE_URL}?chain=sol&page=1`, {
+                headers: {
+                    "x-api-key": API_KEY,
+                    "accept": "application/json"
+                },
+                next: { revalidate: 3600 }, // 1 hour cache
+            })
+        ]);
+
+        let ethTransactions: any[] = [];
+        let solTransactions: any[] = [];
+
+        if (ethRes.ok) {
+            const ethData = await ethRes.json();
+            if (Array.isArray(ethData)) {
+                ethTransactions = ethData.map(tx => ({ ...tx, chain: 'ethereum' }));
+            }
+        }
+
+        if (solRes.ok) {
+            const solData = await solRes.json();
+            if (Array.isArray(solData)) {
+                solTransactions = solData.map(tx => ({ ...tx, chain: 'solana' }));
+            }
+        }
+
+        // Sort both by epoch_time descending
+        ethTransactions.sort((a, b) => b.epoch_time - a.epoch_time);
+        solTransactions.sort((a, b) => b.epoch_time - a.epoch_time);
+
+        return NextResponse.json({
+            eth: ethTransactions.slice(0, 100),
+            sol: solTransactions.slice(0, 100)
+        });
+
     } catch (error) {
-        console.error("Error fetching from Whale Alert:", error);
+        console.error("Error fetching from DexCheck:", error);
         return NextResponse.json(
             { error: "Failed to fetch transactions" },
             { status: 500 }

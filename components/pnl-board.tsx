@@ -10,12 +10,18 @@ import { AddressPnlData, AddressPnlResponse, AddressPnlSummaryResponse, fetchAdd
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 function formatUSD(value: number): string {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  } else if (value >= 1000) {
-    return `$${(value / 1000).toFixed(1)}K`;
-  }
-  return `$${value.toFixed(0)}`;
+  if (value === 0) return "$0";
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+
+  if (absValue >= 1_000_000) return `${sign}$${(absValue / 1_000_000).toFixed(1)}M`;
+  if (absValue >= 1_000) return `${sign}$${(absValue / 1_000).toFixed(1)}K`;
+  if (absValue >= 1) return `${sign}$${absValue.toFixed(2)}`;
+
+  return `${sign}$${absValue.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  })}`;
 }
 
 function formatPercent(value: number): string {

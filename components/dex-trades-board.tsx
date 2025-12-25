@@ -63,9 +63,18 @@ function formatTime(ts: string): string {
 
 function formatUSD(value: number | undefined | null): string {
   if (value === undefined || value === null) return "-";
-  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
+  if (value === 0) return "$0";
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+
+  if (absValue >= 1_000_000) return `${sign}$${(absValue / 1_000_000).toFixed(1)}M`;
+  if (absValue >= 1_000) return `${sign}$${(absValue / 1_000).toFixed(1)}K`;
+  if (absValue >= 1) return `${sign}$${absValue.toFixed(2)}`;
+
+  return `${sign}$${absValue.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  })}`;
 }
 
 function formatMarketCap(value: number | undefined | null): string {

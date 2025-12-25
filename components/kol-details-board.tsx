@@ -142,6 +142,16 @@ function formatChartDate(timestamp: number): string {
   });
 }
 
+function formatChartDateTime(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function getSentimentColor(sentiment: string): string {
   switch (sentiment) {
     case "positive":
@@ -197,32 +207,68 @@ function calculateROI(currentPrice: string, firstMentionPrice: string): number {
 }
 
 // Chart Component with multiple mention markers
-function TokenChart({ 
+function TokenChart({
   group,
-  chartData, 
+  chartData,
   loading,
   tokenLogo,
   username,
-}: { 
+  timeframe,
+}: {
   group: GroupedToken;
-  chartData: OHLCData[]; 
+  chartData: OHLCData[];
   loading: boolean;
   tokenLogo: string | null;
   username: string;
+  timeframe: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; type: 'price' | 'mention'; data: any } | null>(null);
-  const chartDataRef = useRef<{ 
-    padding: any; 
-    chartWidth: number; 
-    chartHeight: number; 
-    minPrice: number; 
-    priceRange: number; 
-    startTime: number; 
+  const [profileImages, setProfileImages] = useState<Map<string, HTMLImageElement>>(new Map());
+  const chartDataRef = useRef<{
+    padding: any;
+    chartWidth: number;
+    chartHeight: number;
+    minPrice: number;
+    priceRange: number;
+    startTime: number;
     timeRange: number;
     mentionPositions: { x: number; y: number; mention: KOLTokenMovement }[];
   } | null>(null);
+
+  // Load profile images
+  useEffect(() => {
+    const images = new Map<string, HTMLImageElement>();
+    let loadedCount = 0;
+    const totalImages = group.mentions.length;
+
+    if (totalImages === 0) {
+      setProfileImages(new Map());
+      return;
+    }
+
+    group.mentions.forEach((mention) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      const imageUrl = mention.profile_image_url;
+      images.set(imageUrl, img);
+      
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setProfileImages(new Map(images));
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setProfileImages(new Map(images));
+        }
+      };
+      img.src = imageUrl;
+    });
+  }, [group.mentions]);
 
   const drawChart = useCallback(() => {
     if (!canvasRef.current || !containerRef.current || chartData.length === 0) return;
@@ -246,7 +292,8 @@ function TokenChart({
     ctx.fillRect(0, 0, width, height);
 
     const prices = chartData.map((d) => parseFloat(d.close));
-    const mentionPrices = group.mentions.map(m => parseFloat(m.other_data.first_mention_price));
+    // Use usd_price (price at time of each mention) not first_mention_price (which is always the same)
+    const mentionPrices = group.mentions.map(m => parseFloat(m.usd_price));
     const allPrices = [...prices, ...mentionPrices];
     const minPrice = Math.min(...allPrices) * 0.95;
     const maxPrice = Math.max(...allPrices) * 1.05;
@@ -309,7 +356,8 @@ function TokenChart({
       const callTimestamp = mention.timestamp;
       if (callTimestamp >= startTime && callTimestamp <= endTime) {
         const callX = padding.left + ((callTimestamp - startTime) / timeRange) * chartWidth;
-        const callPrice = parseFloat(mention.other_data.first_mention_price);
+        // Use usd_price - the actual price at the time of THIS specific mention
+        const callPrice = parseFloat(mention.usd_price);
         const callY = padding.top + chartHeight - ((callPrice - minPrice) / priceRange) * chartHeight;
         const clampedY = Math.max(padding.top + 8, Math.min(callY, height - padding.bottom - 8));
 
@@ -326,23 +374,45 @@ function TokenChart({
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Draw mention circle with sentiment color
-        const sentimentColor = mention.sentiment === "positive" ? "#10b981" : 
-                              mention.sentiment === "negative" ? "#ef4444" : "#6b7280";
-        
-        ctx.beginPath();
-        ctx.arc(callX, clampedY, 8, 0, Math.PI * 2);
-        ctx.fillStyle = sentimentColor;
-        ctx.fill();
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Draw mention circle with KOL profile image
+        const radius = 10;
+        const sentimentColor = mention.sentiment === "positive" ? "#10b981" :
+          mention.sentiment === "negative" ? "#ef4444" : "#6b7280";
 
-        // Draw inner circle
+        // Draw profile image if available
+        const profileImg = profileImages.get(mention.profile_image_url);
+        if (profileImg && profileImg.complete && profileImg.naturalWidth > 0) {
+          // Create circular clipping path
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(callX, clampedY, radius, 0, Math.PI * 2);
+          ctx.clip();
+          
+          // Draw the image
+          const imgSize = radius * 2;
+          ctx.drawImage(profileImg, callX - radius, clampedY - radius, imgSize, imgSize);
+          ctx.restore();
+        } else {
+          // Fallback to colored circle if image not loaded
+          ctx.beginPath();
+          ctx.arc(callX, clampedY, radius, 0, Math.PI * 2);
+          ctx.fillStyle = sentimentColor;
+          ctx.fill();
+        }
+
+        // Draw sentiment-colored border
         ctx.beginPath();
-        ctx.arc(callX, clampedY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#fff";
-        ctx.fill();
+        ctx.arc(callX, clampedY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = sentimentColor;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        
+        // Draw white outer border for better visibility
+        ctx.beginPath();
+        ctx.arc(callX, clampedY, radius + 1.5, 0, Math.PI * 2);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
     });
 
@@ -358,7 +428,7 @@ function TokenChart({
       const labelWidth = ctx.measureText(labelText).width + 12;
       const labelHeight = 16;
       const labelX = Math.max(padding.left, Math.min(highX - labelWidth / 2, width - padding.right - labelWidth));
-      
+
       ctx.fillStyle = "#1a1d26";
       ctx.strokeStyle = "#2a2d36";
       ctx.lineWidth = 1;
@@ -384,7 +454,7 @@ function TokenChart({
       const labelWidth = ctx.measureText(labelText).width + 12;
       const labelHeight = 16;
       const labelX = Math.max(padding.left, Math.min(lowX - labelWidth / 2, width - padding.right - labelWidth));
-      
+
       ctx.fillStyle = "#1a1d26";
       ctx.strokeStyle = "#2a2d36";
       ctx.lineWidth = 1;
@@ -401,7 +471,7 @@ function TokenChart({
     // Draw current price label on right
     const currentPrice = parseFloat(chartData[chartData.length - 1]?.close || "0");
     const currentY = padding.top + chartHeight - ((currentPrice - minPrice) / priceRange) * chartHeight;
-    
+
     ctx.fillStyle = "#10b981";
     ctx.beginPath();
     ctx.roundRect(width - padding.right + 5, currentY - 10, padding.right - 10, 20, 4);
@@ -434,7 +504,7 @@ function TokenChart({
 
     // Store chart data for hover calculations
     chartDataRef.current = { padding, chartWidth, chartHeight, minPrice, priceRange, startTime, timeRange, mentionPositions };
-  }, [chartData, group]);
+  }, [chartData, group, profileImages]);
 
   useEffect(() => {
     drawChart();
@@ -442,7 +512,7 @@ function TokenChart({
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!chartDataRef.current || chartData.length === 0) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -465,7 +535,7 @@ function TokenChart({
       const relX = x - padding.left;
       const idx = Math.round((relX / chartWidth) * (chartData.length - 1));
       const dataPoint = chartData[Math.max(0, Math.min(idx, chartData.length - 1))];
-      
+
       if (dataPoint) {
         const price = parseFloat(dataPoint.close);
         const tooltipY = padding.top + chartHeight - ((price - minPrice) / priceRange) * chartHeight;
@@ -482,7 +552,7 @@ function TokenChart({
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!chartDataRef.current) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -521,6 +591,20 @@ function TokenChart({
   const firstPrice = parseFloat(group.firstMention.other_data.first_mention_price);
   const roi = calculateROI(group.latestMention.usd_price, group.firstMention.other_data.first_mention_price);
 
+  // Daily and 12h timeframes show date only (12h candles are at fixed times like midnight/noon)
+  // Sub-daily timeframes (1h, 4h, etc.) show date + time
+  const isDailyTimeframe = ['1d', '3d', '7d', '14d', '30d', '12h'].includes(timeframe);
+
+  const formatTooltipTime = (timestamp: number): string => {
+    if (isDailyTimeframe) {
+      // For daily and 12h candles, just show the date
+      return formatChartDate(timestamp);
+    } else {
+      // For hourly or smaller (1m, 5m, 15m, 30m, 1h, 4h), show date + time
+      return formatChartDateTime(timestamp);
+    }
+  };
+
   return (
     <div className="bg-[#0d0f14] rounded-lg p-4">
       {/* Token Header */}
@@ -550,24 +634,24 @@ function TokenChart({
 
       {/* Chart */}
       <div ref={containerRef} className="w-full relative">
-        <canvas 
-          ref={canvasRef} 
-          className="w-full cursor-crosshair" 
+        <canvas
+          ref={canvasRef}
+          className="w-full cursor-crosshair"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
         />
         {tooltip && tooltip.type === 'price' && (
-          <div 
+          <div
             className="absolute pointer-events-none bg-[#1c1e2b] border border-[#2a2d36] rounded px-2 py-1 text-xs shadow-lg z-10"
             style={{ left: Math.min(tooltip.x + 10, containerRef.current?.clientWidth || 0 - 100), top: tooltip.y - 35 }}
           >
             <div className="text-white font-medium">{formatPrice(tooltip.data.price)}</div>
-            <div className="text-gray-500">{formatChartDate(tooltip.data.time)}</div>
+            <div className="text-gray-500">{formatTooltipTime(tooltip.data.time)}</div>
           </div>
         )}
         {tooltip && tooltip.type === 'mention' && (
-          <div 
+          <div
             className="absolute pointer-events-none bg-[#1c1e2b] border border-[#2a2d36] rounded-lg px-3 py-2 text-xs shadow-xl z-10 min-w-[200px]"
             style={{ left: Math.min(tooltip.x + 15, (containerRef.current?.clientWidth || 0) - 220), top: tooltip.y - 80 }}
           >
@@ -576,7 +660,7 @@ function TokenChart({
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-gray-500">Price:</span>
-                <span className="text-white font-medium">{formatPrice(tooltip.data.other_data.first_mention_price)}</span>
+                <span className="text-white font-medium">{formatPrice(tooltip.data.usd_price)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Market Cap:</span>
@@ -608,6 +692,10 @@ export function KOLDetailsBoard() {
   const [searchInput, setSearchInput] = useState<string>("");
   const [duration, setDuration] = useState<"1d" | "7d" | "30d" | "90d">("7d");
 
+  // Sorting
+  const [sortBy, setSortBy] = useState<string>("timestamp");
+  const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("DESC");
+
   // Pagination
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -616,6 +704,7 @@ export function KOLDetailsBoard() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [chartData, setChartData] = useState<OHLCData[]>([]);
   const [chartLoading, setChartLoading] = useState<boolean>(false);
+  const [chartTimeframe, setChartTimeframe] = useState<string>("1h");
 
   // Token metadata cache
   const [tokenMetadata, setTokenMetadata] = useState<Record<string, TokenMetadata>>({});
@@ -623,7 +712,7 @@ export function KOLDetailsBoard() {
   // Group tokens by token_id
   const groupedTokens = useMemo<GroupedToken[]>(() => {
     const groups: Record<string, GroupedToken> = {};
-    
+
     data.forEach(item => {
       if (!groups[item.token_id]) {
         groups[item.token_id] = {
@@ -637,7 +726,7 @@ export function KOLDetailsBoard() {
         };
       }
       groups[item.token_id].mentions.push(item);
-      
+
       // Update first/latest mentions
       if (item.timestamp < groups[item.token_id].firstMention.timestamp) {
         groups[item.token_id].firstMention = item;
@@ -652,9 +741,55 @@ export function KOLDetailsBoard() {
       group.mentions.sort((a, b) => a.timestamp - b.timestamp);
     });
 
-    // Return sorted by first mention timestamp (most recent first)
-    return Object.values(groups).sort((a, b) => b.firstMention.timestamp - a.firstMention.timestamp);
-  }, [data]);
+    // Return sorted tokens
+    const tokens = Object.values(groups);
+    tokens.sort((a, b) => {
+      let valA: any;
+      let valB: any;
+
+      switch (sortBy) {
+        case "token":
+          valA = a.token_symbol.toLowerCase();
+          valB = b.token_symbol.toLowerCase();
+          break;
+        case "chain":
+          valA = a.chain.toLowerCase();
+          valB = b.chain.toLowerCase();
+          break;
+        case "mentions":
+          valA = a.mentions.length;
+          valB = b.mentions.length;
+          break;
+        case "price":
+          valA = parseFloat(a.latestMention.usd_price);
+          valB = parseFloat(b.latestMention.usd_price);
+          break;
+        case "mcap":
+          valA = parseFloat(a.latestMention.mcap);
+          valB = parseFloat(b.latestMention.mcap);
+          break;
+        case "7d_impact":
+          valA = parseFloat(a.firstMention.other_data._7d_impact) || 0;
+          valB = parseFloat(b.firstMention.other_data._7d_impact) || 0;
+          break;
+        case "30d_impact":
+          valA = parseFloat(a.firstMention.other_data._30d_impact) || 0;
+          valB = parseFloat(b.firstMention.other_data._30d_impact) || 0;
+          break;
+        case "timestamp":
+        default:
+          valA = a.firstMention.timestamp;
+          valB = b.firstMention.timestamp;
+          break;
+      }
+
+      if (valA < valB) return sortDirection === "ASC" ? -1 : 1;
+      if (valA > valB) return sortDirection === "ASC" ? 1 : -1;
+      return 0;
+    });
+
+    return tokens;
+  }, [data, sortBy, sortDirection]);
 
   // Fetch token metadata for visible tokens
   useEffect(() => {
@@ -741,17 +876,96 @@ export function KOLDetailsBoard() {
       const startTime = earliestMention - 86400;
       // End at current time
       const endTime = Math.floor(Date.now() / 1000);
-
-      const res = await fetch(
-        `/api/charts?chain=${group.chain.toLowerCase()}&pair_id=${encodeURIComponent(group.pair_id)}&timeframe=4h&start_time_epoch=${startTime}&end_time_epoch=${endTime}`
-      );
-
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json)) {
-          setChartData(json);
-        }
+      
+      // Calculate duration in days
+      const durationDays = (endTime - startTime) / 86400;
+      const SECONDS_PER_DAY = 86400;
+      
+      // API limits:
+      // - 1m, 5m, 15m, 30m, 1h, 4h, 12h: max 7 days per call (chunk size = 6 days)
+      // - 1d, 3d, 7d, 14d, 30d: max 30 days per call (chunk size = 25 days)
+      //
+      // Strategy for optimal balance of chart smoothness and API calls:
+      // - ≤ 3 days: 15m (very smooth, ~288 candles, 1 API call)
+      // - 3-10 days: 1h (smooth, ~168 candles/7 days, 1-2 API calls)
+      // - 10-20 days: 4h (good detail, ~120 candles/20 days, 3-4 API calls)
+      // - 20-30 days: 12h (moderate detail, ~60 candles/30 days, 4-5 API calls)
+      // - > 30 days: 1d (daily candles, ~90 candles/90 days, 4 API calls)
+      
+      let timeframe: string;
+      let chunkDays: number;
+      let overlapSeconds: number;
+      
+      if (durationDays <= 3) {
+        // Very short: 15-minute candles for super smooth chart
+        // API calls: 1 (3 days < 6 day chunk)
+        timeframe = "15m";
+        chunkDays = 6;
+        overlapSeconds = 900; // 15 min overlap
+      } else if (durationDays <= 10) {
+        // Up to 10 days: hourly candles
+        // API calls: 1-2 (10 days / 6 day chunks = 2 calls)
+        timeframe = "1h";
+        chunkDays = 6;
+        overlapSeconds = 3600; // 1 hour overlap
+      } else if (durationDays <= 20) {
+        // 10-20 days: 4-hour candles
+        // API calls: 3-4 (20 days / 6 day chunks = 4 calls)
+        timeframe = "4h";
+        chunkDays = 6;
+        overlapSeconds = 14400; // 4 hour overlap
+      } else if (durationDays <= 30) {
+        // 20-30 days: 12-hour candles
+        // API calls: 4-5 (30 days / 6 day chunks = 5 calls)
+        timeframe = "12h";
+        chunkDays = 6;
+        overlapSeconds = 43200; // 12 hour overlap
+      } else {
+        // More than 30 days: daily candles
+        // API calls: ~4 for 90 days (90 days / 25 day chunks = 4 calls)
+        timeframe = "1d";
+        chunkDays = 25;
+        overlapSeconds = 86400; // 1 day overlap
       }
+      
+      const MAX_SECONDS_PER_CALL = chunkDays * SECONDS_PER_DAY;
+      
+      let allData: OHLCData[] = [];
+      let currentStart = startTime;
+      
+      // Fetch in chunks
+      while (currentStart < endTime) {
+        const chunkEnd = Math.min(currentStart + MAX_SECONDS_PER_CALL, endTime);
+        
+        const res = await fetch(
+          `/api/charts?chain=${group.chain.toLowerCase()}&pair_id=${encodeURIComponent(group.pair_id)}&timeframe=${timeframe}&start_time_epoch=${currentStart}&end_time_epoch=${chunkEnd}`
+        );
+
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json)) {
+            allData = [...allData, ...json];
+          }
+        }
+        
+        // Move to next chunk with overlap
+        currentStart = chunkEnd - overlapSeconds;
+        
+        // Prevent infinite loop
+        if (chunkEnd >= endTime) break;
+      }
+      
+      // Sort and deduplicate
+      allData.sort((a, b) => a.time - b.time);
+      const seen = new Set<number>();
+      allData = allData.filter(item => {
+        if (seen.has(item.time)) return false;
+        seen.add(item.time);
+        return true;
+      });
+      
+      setChartData(allData);
+      setChartTimeframe(timeframe);
     } catch (e) {
       console.error("Failed to fetch chart data:", e);
     } finally {
@@ -807,7 +1021,7 @@ export function KOLDetailsBoard() {
   const avgROI = rois.length > 0 ? rois.reduce((a, b) => a + b, 0) / rois.length : 0;
   const bestROI = rois.length > 0 ? Math.max(...rois) : 0;
   const worstROI = rois.length > 0 ? Math.min(...rois) : 0;
-  
+
   const wins = data.filter((item) => {
     const roi = calculateROI(item.usd_price, item.other_data.first_mention_price);
     return roi > 0;
@@ -873,11 +1087,10 @@ export function KOLDetailsBoard() {
                   key={dur}
                   variant="ghost"
                   size="sm"
-                  className={`h-7 text-[10px] px-3 rounded border border-[#20222f] bg-[#171a26] text-gray-400 lg:rounded-sm lg:border-0 lg:bg-transparent ${
-                    duration === dur
-                      ? "bg-[#20222f] border-[#303240] text-gray-200 shadow-sm lg:bg-[#20222f] lg:text-gray-200"
-                      : "hover:text-gray-200 hover:bg-[#20222f] lg:hover:bg-transparent lg:hover:text-gray-200"
-                  }`}
+                  className={`h-7 text-[10px] px-3 rounded border border-[#20222f] bg-[#171a26] text-gray-400 lg:rounded-sm lg:border-0 lg:bg-transparent ${duration === dur
+                    ? "bg-[#20222f] border-[#303240] text-gray-200 shadow-sm lg:bg-[#20222f] lg:text-gray-200"
+                    : "hover:text-gray-200 hover:bg-[#20222f] lg:hover:bg-transparent lg:hover:text-gray-200"
+                    }`}
                   onClick={() => setDuration(dur)}
                 >
                   {dur}
@@ -1012,32 +1225,100 @@ export function KOLDetailsBoard() {
                 <div className="space-y-1">
                   {/* Table Header */}
                   <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
-                    <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[200px] py-2 pl-4 pr-3 rounded-l border-y border-l border-transparent">
-                      <div className="w-6" />
-                      <div className="h-7 w-7" />
-                      <div className="min-w-[60px]">Token</div>
+                    <div className="sticky left-0 z-10 bg-[#141723] flex items-stretch pl-4">
+                      <div className="bg-[#141723] flex items-center gap-3 min-w-[220px] py-2 pl-3 pr-3 rounded-l border-y border-l border-transparent">
+                        <div className="w-6 shrink-0" />
+                        <div className="h-7 w-7 shrink-0" />
+                        <button
+                          onClick={() => {
+                            if (sortBy === "token") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                            else { setSortBy("token"); setSortDirection("ASC"); }
+                          }}
+                          className={`min-w-[60px] flex items-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "token" ? "text-blue-400" : ""}`}
+                        >
+                          Token {sortBy === "token" && (sortDirection === "DESC" ? "↓" : "↑")}
+                        </button>
+                      </div>
                     </div>
                     <div className="flex-1 flex items-center justify-end min-w-0 gap-0 py-2 pr-3 border-y border-r border-transparent">
-                      <div className="w-[70px] text-center">Chain</div>
-                      <div className="w-[80px] text-center">Mentions</div>
-                      <div className="w-[100px] text-center">Price</div>
-                      <div className="w-[100px] text-center">MCap</div>
-                      <div className="w-[90px] text-center">7d Impact</div>
-                      <div className="w-[90px] text-center">30d Impact</div>
-                      <div className="w-[150px] text-center">First Mention</div>
-                      <div className="w-[110px] text-center">Token ID</div>
+                      <button
+                        onClick={() => {
+                          if (sortBy === "chain") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                          else { setSortBy("chain"); setSortDirection("ASC"); }
+                        }}
+                        className={`w-[80px] text-center flex items-center justify-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "chain" ? "text-blue-400" : ""}`}
+                      >
+                        Chain {sortBy === "chain" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (sortBy === "mentions") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                          else { setSortBy("mentions"); setSortDirection("DESC"); }
+                        }}
+                        className={`w-[60px] text-center flex items-center justify-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "mentions" ? "text-blue-400" : ""}`}
+                      >
+                        Calls {sortBy === "mentions" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (sortBy === "price") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                          else { setSortBy("price"); setSortDirection("DESC"); }
+                        }}
+                        className={`w-[100px] text-center flex items-center justify-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "price" ? "text-blue-400" : ""}`}
+                      >
+                        Price {sortBy === "price" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (sortBy === "mcap") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                          else { setSortBy("mcap"); setSortDirection("DESC"); }
+                        }}
+                        className={`w-[90px] text-center flex items-center justify-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "mcap" ? "text-blue-400" : ""}`}
+                      >
+                        MCap {sortBy === "mcap" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (sortBy === "7d_impact") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                          else { setSortBy("7d_impact"); setSortDirection("DESC"); }
+                        }}
+                        className={`w-[80px] text-center flex items-center justify-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "7d_impact" ? "text-blue-400" : ""}`}
+                      >
+                        7d {sortBy === "7d_impact" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (sortBy === "30d_impact") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                          else { setSortBy("30d_impact"); setSortDirection("DESC"); }
+                        }}
+                        className={`w-[80px] text-center flex items-center justify-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "30d_impact" ? "text-blue-400" : ""}`}
+                      >
+                        30d {sortBy === "30d_impact" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (sortBy === "timestamp") setSortDirection(d => d === "DESC" ? "ASC" : "DESC");
+                          else { setSortBy("timestamp"); setSortDirection("DESC"); }
+                        }}
+                        className={`w-[140px] text-center flex items-center justify-center gap-1 hover:text-gray-300 transition-colors ${sortBy === "timestamp" ? "text-blue-400" : ""}`}
+                      >
+                        First Mention {sortBy === "timestamp" && (sortDirection === "DESC" ? "↓" : "↑")}
+                      </button>
+                      <div className="w-[100px] text-center">Token ID</div>
                       <div className="w-[80px] text-center">Links</div>
                     </div>
                   </div>
 
                   {/* Data Rows */}
-                  <div className="space-y-1 pl-4">
+                  <div className="space-y-1">
                     {groupedTokens.map((group) => {
                       const isExpanded = expandedRow === group.token_id;
                       const firstMention = group.firstMention;
+                      const latestMention = group.latestMention;
                       const metaKey = `${group.chain}-${group.token_id}`;
                       const meta = tokenMetadata[metaKey];
-                      const roi = calculateROI(group.latestMention.usd_price, group.firstMention.other_data.first_mention_price);
+                      const roi = calculateROI(latestMention.usd_price, firstMention.other_data.first_mention_price);
+                      const sentiment = firstMention.other_data.first_mention_sentiment || firstMention.sentiment;
 
                       return (
                         <div key={group.token_id}>
@@ -1045,23 +1326,27 @@ export function KOLDetailsBoard() {
                             className="flex items-stretch group whitespace-nowrap cursor-pointer"
                             onClick={() => handleRowClick(group)}
                           >
-                            <div className="sticky left-0 z-10 flex items-stretch bg-[#141723]">
-                              <div className={`bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[200px] ml-0 pl-3 py-2.5 ${isExpanded ? "rounded-tl border-b-0" : "rounded-l"} transition-colors duration-150`}>
-                                <div className="h-6 w-6 flex items-center justify-center">
+                            <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
+                              <div className={`bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-3 min-w-[220px] ml-0 pl-3 pr-3 py-2.5 ${isExpanded ? "rounded-tl border-b-0" : "rounded-l"} transition-colors duration-150`}>
+                                <div className="h-6 w-6 flex items-center justify-center shrink-0">
                                   {isExpanded ? (
                                     <ChevronUp className="w-4 h-4 text-gray-400" />
                                   ) : (
                                     <ChevronDown className="w-4 h-4 text-gray-400" />
                                   )}
                                 </div>
-                                <div className="h-7 w-7 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
-                                  {meta?.logo ? (
-                                    <img src={meta.logo} alt={group.token_symbol} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="text-[10px] text-gray-500 font-medium">
-                                      {group.token_symbol.slice(0, 2).toUpperCase()}
-                                    </div>
-                                  )}
+                                <div className="relative h-7 w-7 shrink-0">
+                                  <div className="h-7 w-7 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center">
+                                    {meta?.logo ? (
+                                      <img src={meta.logo} alt={group.token_symbol} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="text-[10px] text-gray-500 font-medium">
+                                        {group.token_symbol.slice(0, 2).toUpperCase()}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {/* Sentiment indicator dot */}
+                                  <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#171a26] ${sentiment === 'positive' ? 'bg-emerald-500' : sentiment === 'negative' ? 'bg-rose-500' : 'bg-gray-500'}`} />
                                 </div>
                                 <span className="text-xs text-blue-300 font-medium whitespace-nowrap">
                                   ${group.token_symbol}
@@ -1069,43 +1354,43 @@ export function KOLDetailsBoard() {
                               </div>
                             </div>
 
-                            <div className={`flex-1 flex items-center min-w-0 gap-0 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] ${isExpanded ? "rounded-tr border-b-0" : "rounded-r"} group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150`}>
-                              <div className="w-[70px] flex justify-center">
+                            <div className={`flex-1 flex items-center justify-end min-w-0 gap-0 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] ${isExpanded ? "rounded-tr border-b-0" : "rounded-r"} group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150`}>
+                              <div className="w-[80px] flex justify-center">
                                 <Badge className={`text-[9px] h-5 px-1.5 border ${getChainColor(group.chain)}`}>
                                   {group.chain}
                                 </Badge>
                               </div>
-                              <div className="w-[80px] flex justify-center">
+                              <div className="w-[60px] flex justify-center">
                                 <span className="text-xs text-white font-medium">
                                   {group.mentions.length}x
                                 </span>
                               </div>
                               <div className="w-[100px] flex justify-center">
                                 <span className="text-xs text-white font-medium tabular-nums">
-                                  {formatPrice(group.latestMention.usd_price)}
-                                </span>
-                              </div>
-                              <div className="w-[100px] flex justify-center">
-                                <span className="text-xs text-sky-400 tabular-nums">
-                                  {formatMcap(group.latestMention.mcap)}
+                                  {formatPrice(latestMention.usd_price)}
                                 </span>
                               </div>
                               <div className="w-[90px] flex justify-center">
+                                <span className="text-xs text-sky-400 tabular-nums">
+                                  {formatMcap(latestMention.mcap)}
+                                </span>
+                              </div>
+                              <div className="w-[80px] flex justify-center">
                                 <span className={`text-xs font-medium tabular-nums ${parseFloat(firstMention.other_data._7d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                   {formatImpact(firstMention.other_data._7d_impact)}
                                 </span>
                               </div>
-                              <div className="w-[90px] flex justify-center">
+                              <div className="w-[80px] flex justify-center">
                                 <span className={`text-xs font-medium tabular-nums ${parseFloat(firstMention.other_data._30d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                   {formatImpact(firstMention.other_data._30d_impact)}
                                 </span>
                               </div>
-                              <div className="w-[150px] flex justify-center">
+                              <div className="w-[140px] flex justify-center">
                                 <span className="text-[10px] text-gray-500">
                                   {formatTimestamp(firstMention.timestamp)}
                                 </span>
                               </div>
-                              <div className="w-[110px] relative flex items-center justify-center">
+                              <div className="w-[100px] relative flex items-center justify-center">
                                 <span className="text-xs text-gray-400 font-mono text-center w-full">
                                   {group.token_id.slice(0, 4)}...{group.token_id.slice(-4)}
                                 </span>
@@ -1150,50 +1435,84 @@ export function KOLDetailsBoard() {
                           {/* Expanded Chart Panel */}
                           {isExpanded && (
                             <div className="bg-[#171a26] border-l border-r border-b border-[#20222f] rounded-b-lg p-4 mb-1">
-                              <TokenChart 
+                              <TokenChart
                                 group={group}
-                                chartData={chartData} 
+                                chartData={chartData}
                                 loading={chartLoading}
                                 tokenLogo={meta?.logo || null}
                                 username={username}
+                                timeframe={chartTimeframe}
                               />
 
-                              {/* Price Info */}
+                              {/* Price & Market Cap Info */}
                               <div className="mt-4">
-                                <div className="text-xs font-medium text-white mb-2">Price</div>
-                                <div className="grid grid-cols-3 gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                <div className="text-xs font-medium text-white mb-2">Price & Market Cap</div>
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
                                   <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">At first mention</div>
-                                    <div className="text-sm font-medium text-emerald-400">
-                                      {formatPrice(group.firstMention.other_data.first_mention_price)}
+                                    <div className="text-[10px] text-gray-500 mb-1">First Mention Price</div>
+                                    <div className="text-sm font-medium text-white">
+                                      {formatPrice(firstMention.other_data.first_mention_price)}
                                     </div>
                                   </div>
                                   <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">Sentiment</div>
-                                    <div className="text-sm font-medium text-emerald-400">
-                                      {getSentimentText(group.firstMention.other_data.first_mention_sentiment)}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">Current</div>
+                                    <div className="text-[10px] text-gray-500 mb-1">Current Price</div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm font-medium text-emerald-400">{formatPrice(group.latestMention.usd_price)}</span>
+                                      <span className="text-sm font-medium text-white">{formatPrice(latestMention.usd_price)}</span>
                                       <span className={`text-xs font-medium ${roi >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                         {formatROI(roi)}
                                       </span>
                                     </div>
                                   </div>
+                                  <div>
+                                    <div className="text-[10px] text-gray-500 mb-1">First Mention MCap</div>
+                                    <div className="text-sm font-medium text-sky-400">
+                                      {formatMcap(firstMention.other_data.first_mention_mcap)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] text-gray-500 mb-1">Current MCap</div>
+                                    <div className="text-sm font-medium text-sky-400">
+                                      {formatMcap(latestMention.mcap)}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
 
-                              {/* Performance After Mention */}
+                              {/* Sentiment Info */}
                               <div className="mt-4">
-                                <div className="text-xs font-medium text-white mb-2">Performance After Mention</div>
-                                <div className="grid grid-cols-3 gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                <div className="text-xs font-medium text-white mb-2">Sentiment</div>
+                                <div className="grid grid-cols-2 gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                  <div>
+                                    <div className="text-[10px] text-gray-500 mb-1">First Mention Sentiment</div>
+                                    <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 w-fit ${getSentimentColor(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}`}>
+                                      {getSentimentIcon(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}
+                                      {getSentimentText(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}
+                                    </Badge>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] text-gray-500 mb-1">Latest Sentiment</div>
+                                    <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 w-fit ${getSentimentColor(latestMention.sentiment)}`}>
+                                      {getSentimentIcon(latestMention.sentiment)}
+                                      {getSentimentText(latestMention.sentiment)}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Performance After Mention - All Timeframes */}
+                              <div className="mt-4">
+                                <div className="text-xs font-medium text-white mb-2">Performance After First Mention</div>
+                                <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
                                   <div>
                                     <div className="text-[10px] text-gray-500 mb-1">24h</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._24h_impcat) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._24h_impcat)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] text-gray-500 mb-1">3d</div>
+                                    <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._3d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                      {formatImpact(firstMention.other_data._3d_impact)}
                                     </div>
                                   </div>
                                   <div>
@@ -1203,46 +1522,59 @@ export function KOLDetailsBoard() {
                                     </div>
                                   </div>
                                   <div>
+                                    <div className="text-[10px] text-gray-500 mb-1">14d</div>
+                                    <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._14d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                      {formatImpact(firstMention.other_data._14d_impact)}
+                                    </div>
+                                  </div>
+                                  <div>
                                     <div className="text-[10px] text-gray-500 mb-1">30d</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._30d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._30d_impact)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] text-gray-500 mb-1">90d</div>
+                                    <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._90d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                      {formatImpact(firstMention.other_data._90d_impact)}
                                     </div>
                                   </div>
                                 </div>
                               </div>
 
                               {/* All Mentions List */}
-                              {group.mentions.length > 1 && (
-                                <div className="mt-4">
-                                  <div className="text-xs font-medium text-white mb-2">All Mentions ({group.mentions.length})</div>
-                                  <div className="space-y-2">
-                                    {group.mentions.map((mention, idx) => (
-                                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg border border-[#20222f] bg-[#0d0f14]">
-                                        <div className="flex items-center gap-3">
-                                          <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 ${getSentimentColor(mention.sentiment)}`}>
-                                            {getSentimentIcon(mention.sentiment)}
-                                            {mention.sentiment}
-                                          </Badge>
-                                          <span className="text-[10px] text-gray-500">{formatTimestamp(mention.timestamp)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                          <span className="text-xs text-white">{formatPrice(mention.usd_price)}</span>
-                                          <a
-                                            href={mention.tweet_link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="opacity-60 hover:opacity-100 transition-opacity"
-                                          >
-                                            <svg width={12} height={12} viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 hover:text-sky-400">
-                                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                            </svg>
-                                          </a>
-                                        </div>
+                              <div className="mt-4">
+                                <div className="text-xs font-medium text-white mb-2">All Mentions ({group.mentions.length})</div>
+                                <div className="space-y-2">
+                                  {group.mentions.map((mention, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                      <div className="flex items-center gap-3">
+                                        <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 ${getSentimentColor(mention.sentiment)}`}>
+                                          {getSentimentIcon(mention.sentiment)}
+                                          {getSentimentText(mention.sentiment)}
+                                        </Badge>
+                                        <span className="text-[10px] text-gray-500">{formatTimestamp(mention.timestamp)}</span>
                                       </div>
-                                    ))}
-                                  </div>
+                                      <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                          <div className="text-xs text-white font-medium">{formatPrice(mention.usd_price)}</div>
+                                          <div className="text-[10px] text-gray-500">{formatMcap(mention.mcap)}</div>
+                                        </div>
+                                        <a
+                                          href={mention.tweet_link}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="opacity-60 hover:opacity-100 transition-opacity"
+                                        >
+                                          <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 hover:text-sky-400">
+                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                          </svg>
+                                        </a>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
-                              )}
+                              </div>
                             </div>
                           )}
                         </div>

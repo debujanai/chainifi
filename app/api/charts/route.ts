@@ -34,8 +34,8 @@ export async function GET(request: Request) {
         );
     }
 
-    // Validate timeframe
-    const validTimeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M"];
+    // Validate timeframe (DexCheck API supports: 1m, 5m, 15m, 30m, 1h, 4h, 12h, 1d, 3d, 7d, 14d, 30d)
+    const validTimeframes = ["1m", "5m", "15m", "30m", "1h", "4h", "12h", "1d", "3d", "7d", "14d", "30d"];
     if (!validTimeframes.includes(timeframe)) {
         return NextResponse.json(
             { error: `Invalid timeframe. Must be one of: ${validTimeframes.join(", ")}` },

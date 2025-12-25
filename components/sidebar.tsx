@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, Plus, Search, TrendingUp, Wallet, Clock, ArrowLeftRight, BarChart3, Repeat, FileText, Users, Network, DollarSign, Tag, Filter, Activity, ArrowRight, ArrowUpDown, Send, Trophy, User } from "lucide-react";
+import { ChevronDown, Plus, Search, TrendingUp, Wallet, Clock, ArrowLeftRight, BarChart3, Repeat, FileText, Users, Network, DollarSign, Tag, Filter, Activity, ArrowRight, ArrowUpDown, Send, Trophy, User, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -71,6 +71,11 @@ export function Sidebar() {
             <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
               <Link href="/kol-details">
                 <User className="w-4 h-4 text-cyan-400" /> KOL Details
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/whale-tracker">
+                <Waves className="w-4 h-4 text-teal-400" /> Whale Tracker
               </Link>
             </Button>
           </div>

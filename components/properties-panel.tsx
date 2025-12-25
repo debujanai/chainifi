@@ -6,39 +6,42 @@ import { useResponsiveNav } from "./responsive-nav-context";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
-interface ApiTransaction {
-  id: string;
-  timestamp: number;
-  symbol: string;
-  amount: number;
+// Updated Interface for DexCheck Transaction
+interface DexCheckTransaction {
+  side: "buy" | "sell";
+  usd_price: number;
+  pair_id: string;
+  tx_hash: string;
   amount_usd: number;
-  transaction_type: string;
-  hash: string;
-  blockchain: string;
-  transaction_count: number;
-  from: {
-    owner: string;
-    address: string;
-    owner_type: string;
-  };
-  to: {
-    owner: string;
-    address: string;
-    owner_type: string;
-  };
+  pair: string;
+  epoch_time: number;
+  exchange: string;
+  maker: string;
+  base_id: string;
+  base_name: string;
+  base_symbol: string;
+  quote_name: string;
+  quote_symbol: string;
+  token_qty: number;
+  pair_created: number;
+  mcap: number;
+  chain?: string; // Added by our backend
 }
 
-interface WhaleTransfer extends ApiTransaction {
+interface WhaleTransfer extends DexCheckTransaction {
+  id: string; // Artificial ID
   timeAgo: string;
   formattedAmount: string;
   formattedUsdValue: string;
   summaryDescription: string;
+  symbol: string; // To match logic
 }
 
 function formatTokenColor(token: string): string {
+  if (!token) return "#6b7280";
   const t = token.toUpperCase();
   if (t === "BTC") return "#f59e0b";
-  if (t === "ETH") return "#627eea";
+  if (t === "ETH" || t === "WETH") return "#627eea";
   if (t === "USDC") return "#2775ca";
   if (t === "USDT") return "#26a17b";
   if (t === "SOL") return "#14F195";
@@ -55,6 +58,13 @@ function formatMoney(amount: number): string {
 }
 
 function formatNumber(num: number): string {
+  if (num >= 1000000) {
+    return new Intl.NumberFormat('en-US', {
+      maximumFractionDigits: 1,
+      notation: "compact",
+      compactDisplay: "short"
+    }).format(num);
+  }
   return new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 2,
   }).format(num);
@@ -67,36 +77,38 @@ function truncateHash(hash: string, length = 6): string {
 
 export function PropertiesPanel() {
   const { rightOpen } = useResponsiveNav();
-  const [transfers, setTransfers] = useState<WhaleTransfer[]>([]);
+  const [data, setData] = useState<{ eth: WhaleTransfer[], sol: WhaleTransfer[] }>({ eth: [], sol: [] });
+  const [activeTab, setActiveTab] = useState<'eth' | 'sol'>('eth');
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchTransactions() {
       try {
-        const res = await fetch('/api/whale-alert/transactions?limit=50');
-        const data = await res.json();
+        const res = await fetch('/api/whale-alert/transactions');
+        const json = await res.json();
 
-        if (data.transactions) {
-          // Sort transactions by timestamp descending (newest first)
-          const sortedTransactions = data.transactions.sort((a: ApiTransaction, b: ApiTransaction) => b.timestamp - a.timestamp);
-
-          const formatted: WhaleTransfer[] = sortedTransactions.map((tx: ApiTransaction) => {
-            const timeAgo = formatDistanceToNow(tx.timestamp * 1000, { addSuffix: true })
+        const formatSet = (list: DexCheckTransaction[]) =>
+          list.map((tx, index) => {
+            const timeAgo = formatDistanceToNow(tx.epoch_time * 1000, { addSuffix: true })
               .replace("about ", "");
-
-            const fromOwner = tx.from.owner === "unknown" ? "unknown wallet" : `#${tx.from.owner}`;
-            const toOwner = tx.to.owner === "unknown" ? "unknown wallet" : `#${tx.to.owner}`;
-
+            const action = tx.side.toUpperCase();
             return {
               ...tx,
+              id: `${tx.tx_hash}-${index}`,
               timeAgo,
-              formattedAmount: formatNumber(tx.amount),
+              formattedAmount: formatNumber(tx.token_qty),
               formattedUsdValue: formatMoney(tx.amount_usd),
-              summaryDescription: `${tx.transaction_type} from ${fromOwner} to ${toOwner}`,
+              summaryDescription: `${action} ${tx.pair} on ${tx.exchange}`,
+              symbol: tx.base_symbol,
             };
           });
-          setTransfers(formatted);
+
+        if (json.eth || json.sol) {
+          setData({
+            eth: formatSet(json.eth || []),
+            sol: formatSet(json.sol || []),
+          });
         }
       } catch (error) {
         console.error("Failed to fetch whale transactions", error);
@@ -110,35 +122,24 @@ export function PropertiesPanel() {
     return () => clearInterval(interval);
   }, []);
 
-  const toggleExpand = (id: string) => {
+  const toggleExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setExpandedId(prev => prev === id ? null : id);
   };
 
-  const getExplorerUrl = (blockchain: string, hash: string) => {
-    switch (blockchain.toLowerCase()) {
-      case 'bitcoin':
-        return `https://www.blockchain.com/explorer/transactions/btc/${hash}`;
+  const currentTransfers = activeTab === 'eth' ? data.eth : data.sol;
+
+  const getExplorerUrl = (blockchain: string | undefined, hash: string) => {
+    const chain = blockchain?.toLowerCase() || '';
+    switch (chain) {
       case 'ethereum':
+      case 'eth':
         return `https://etherscan.io/tx/${hash}`;
-      case 'tron':
-        return `https://tronscan.org/#/transaction/${hash}`;
-      case 'ripple':
-      case 'xrp':
-        return `https://xrpscan.com/tx/${hash}`;
       case 'solana':
+      case 'sol':
         return `https://solscan.io/tx/${hash}`;
-      case 'bnb':
-      case 'binance-coin':
-        return `https://bscscan.com/tx/${hash}`;
-      case 'polygon':
-      case 'matic':
-        return `https://polygonscan.com/tx/${hash}`;
-      case 'avalanche':
-      case 'avax':
-        return `https://snowtrace.io/tx/${hash}`;
       default:
-        // Fallback to a google search which is often quite effective for unknown chains
-        return `https://www.google.com/search?q=${blockchain}+transaction+${hash}`;
+        return `https://www.google.com/search?q=transaction+${hash}`;
     }
   };
 
@@ -156,130 +157,153 @@ export function PropertiesPanel() {
         panels:w-80 panels:max-w-80 panels:border-l panels:border-[#20222f] panels:opacity-100 panels:pointer-events-auto
       `}
     >
-      <div className="p-4 border-b border-[#20222f]">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-xs">
-            ⚡
+      <div className="px-5 py-5 flex flex-col gap-5 border-b border-[#20222f] bg-[#141723] sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 bg-blue-500/10 border border-blue-500/20 rounded-md flex items-center justify-center">
+              <span className="text-blue-400 text-[10px] animate-pulse">⚡</span>
+            </div>
+            <span className="text-white font-semibold text-sm tracking-tight capitalize">Whale Tracker</span>
           </div>
-          <span className="text-white font-normal text-sm">Whale Transfers</span>
+          {loading && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping" />}
+        </div>
+
+        {/* Premium Tab Switcher - Styled with dApp colors */}
+        <div className="flex p-0.5 bg-[#171a26] rounded-md border border-[#20222f] self-stretch">
+          {(['eth', 'sol'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`
+                        flex-1 py-1.5 text-[10px] font-medium rounded-sm transition-all duration-300 uppercase tracking-wider
+                        ${activeTab === tab
+                  ? "bg-[#20222f] text-gray-200 shadow-sm"
+                  : "text-gray-500 hover:text-gray-300"}
+                    `}
+            >
+              {tab === 'eth' ? 'Ethereum' : 'Solana'}
+            </button>
+          ))}
         </div>
       </div>
 
-      <ScrollArea className="flex-1" aria-label="Whale transfers content">
-        <div className="p-4">
-          <div className="space-y-2">
-            {loading ? (
-              <div className="text-gray-500 text-xs text-center py-4">Loading transfers...</div>
-            ) : transfers.length === 0 ? (
-              <div className="text-gray-500 text-xs text-center py-4">No transfers found</div>
-            ) : (
-              transfers.map((transfer) => {
-                const isExpanded = expandedId === transfer.id;
+      <ScrollArea className="flex-1 px-4 py-5" aria-label="Whale transfers content">
+        <div className="space-y-3 pb-8">
+          {loading && currentTransfers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 grayscale opacity-50">
+              <div className="w-5 h-5 text-blue-400 animate-spin">⚡</div>
+              <span className="text-[11px] text-gray-500 font-medium">Syncing data...</span>
+            </div>
+          ) : currentTransfers.length === 0 ? (
+            <div className="text-gray-500 text-[11px] text-center py-20 font-medium">No results found</div>
+          ) : (
+            currentTransfers.map((transfer) => {
+              const isExpanded = expandedId === transfer.id;
+              const isSell = transfer.side === 'sell';
 
-                return (
-                  <div
-                    key={transfer.id}
-                    onClick={() => toggleExpand(transfer.id)}
-                    className={`
-                      bg-[#171a26] border rounded p-3 transition-all cursor-pointer
-                      ${isExpanded ? 'border-blue-500/50 bg-[#1a1d2d]' : 'border-[#20222f] hover:bg-[#1c1e2b] hover:border-[#272936]'}
-                    `}
-                  >
-                    {/* Header Row */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+              return (
+                <div
+                  key={transfer.id}
+                  onClick={(e) => toggleExpand(transfer.id, e)}
+                  className={`
+                            group relative bg-[#171a26] border rounded p-4 transition-all duration-300 overflow-hidden
+                            ${isExpanded
+                      ? 'border-blue-500/40 bg-[#1c1e2b] shadow-lg shadow-black/20'
+                      : 'border-[#20222f] hover:border-blue-500/20 hover:bg-[#1c1e2b]/80 hover:translate-y-[-2px]'}
+                        `}
+                >
+                  {/* Aesthetic Status Bar */}
+                  <div className={`
+                            absolute left-0 top-0 bottom-0 w-[3px] transition-all
+                            ${isSell ? 'bg-red-500/60' : 'bg-green-500/60'}
+                        `} />
+
+                  {/* Header Row */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`
+                                    text-[9px] font-bold px-1.5 py-0.5 rounded-sm tracking-tighter uppercase
+                                    ${isSell ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}
+                                `}>
+                        {transfer.side}
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-medium tabular-nums uppercase">
                         {transfer.timeAgo}
                       </span>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       {isExpanded ? (
-                        <ChevronUp className="w-3 h-3 text-gray-400" />
+                        <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
                       ) : (
-                        <ChevronDown className="w-3 h-3 text-gray-400" />
+                        <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
                       )}
                     </div>
+                  </div>
 
-                    {/* Main Summary */}
-                    <div className="mb-2">
-                      <div className="flex items-baseline gap-1.5 mb-1">
-                        <span className="text-sm font-medium text-white">
-                          {transfer.formattedAmount}
-                        </span>
-                        <span
-                          className="text-xs font-medium"
-                          style={{ color: formatTokenColor(transfer.symbol) }}
-                        >
-                          #{transfer.symbol.toUpperCase()}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          ({transfer.formattedUsdValue})
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-400 leading-relaxed capitalize">
-                        {transfer.summaryDescription}
-                      </div>
+                  {/* Content Body */}
+                  <div className="flex flex-col gap-1.5 pl-1.5">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[15px] font-bold text-white leading-none tracking-tight">
+                        {transfer.formattedAmount}
+                      </span>
+                      <span
+                        className="text-[11px] font-bold tracking-tight bg-white/5 px-1.5 py-0.5 rounded-sm border border-white/5"
+                        style={{ color: formatTokenColor(transfer.symbol) }}
+                      >
+                        {transfer.symbol.toUpperCase()}
+                      </span>
                     </div>
 
-                    {/* Detailed View */}
-                    {isExpanded && (
-                      <div className="mt-3 pt-3 border-t border-[#2a2d3d] grid gap-2 text-xs animate-in fade-in slide-in-from-top-1 duration-200">
-                        <div className="grid grid-cols-[80px_1fr] gap-2">
-                          <span className="text-gray-500">Blockchain</span>
-                          <span className="text-gray-300 capitalize">{transfer.blockchain}</span>
-                        </div>
-                        <div className="grid grid-cols-[80px_1fr] gap-2">
-                          <span className="text-gray-500">Type</span>
-                          <div className="flex flex-col">
-                            <span className="text-gray-300 capitalize">{transfer.transaction_type}</span>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-[80px_1fr] gap-2">
-                          <span className="text-gray-500">Tx Hash</span>
-                          <div className="flex items-center gap-1 group">
-                            <a
-                              href={getExplorerUrl(transfer.blockchain, transfer.hash)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 font-mono hover:text-blue-300 hover:underline flex items-center gap-1"
-                              title={transfer.hash}
-                              onClick={(e) => e.stopPropagation()} // Prevent card collapse when clicking link
-                            >
-                              {truncateHash(transfer.hash)}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-[80px_1fr] gap-2">
-                          <span className="text-gray-500">From</span>
-                          <div className="flex flex-col">
-                            <span className="text-gray-300">
-                              {transfer.from.owner !== 'unknown' ? transfer.from.owner : 'Unknown Wallet'}
-                            </span>
-                            <span className="text-gray-600 font-mono text-[10px]" title={transfer.from.address}>
-                              {truncateHash(transfer.from.address)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-[80px_1fr] gap-2">
-                          <span className="text-gray-500">To</span>
-                          <div className="flex flex-col">
-                            <span className="text-gray-300">
-                              {transfer.to.owner !== 'unknown' ? transfer.to.owner : 'Unknown Wallet'}
-                            </span>
-                            <span className="text-gray-600 font-mono text-[10px]" title={transfer.to.address}>
-                              {truncateHash(transfer.to.address)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-[80px_1fr] gap-2">
-                          <span className="text-gray-500">Tx Count</span>
-                          <span className="text-gray-300">{transfer.transaction_count}</span>
-                        </div>
+                    <div className="flex items-center justify-between mt-1 gap-2">
+                      <span className="text-[12px] text-gray-400 font-medium tracking-tight whitespace-nowrap">
+                        {transfer.formattedUsdValue}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-bold bg-[#20222f] px-2 py-0.5 rounded-full border border-white/5 min-w-0 max-w-[150px]">
+                        <span className="uppercase truncate shrink-0">{transfer.exchange.replace('uniswapv', 'Uni v')}</span>
+                        <span className="w-1 h-1 bg-gray-600 rounded-full shrink-0" />
+                        <span className="truncate">{transfer.pair}</span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                );
-              })
-            )}
-          </div>
+
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-[#2a2d3d] grid gap-3 animate-in fade-in slide-in-from-top-2 duration-300 pl-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pair Address</span>
+                        <span className="text-[11px] text-blue-400/80 font-mono bg-blue-400/5 px-1.5 py-0.5 rounded-sm border border-blue-400/10">
+                          {truncateHash(transfer.pair_id, 8)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Maker</span>
+                        <span className="text-[11px] text-gray-300 font-mono bg-white/5 px-1.5 py-0.5 rounded-sm border border-white/5">
+                          {truncateHash(transfer.maker, 8)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Tx Hash</span>
+                        <a
+                          href={getExplorerUrl(transfer.chain, transfer.tx_hash)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-blue-400 font-mono hover:text-blue-300 flex items-center gap-1.5 bg-blue-500/5 px-2 py-1 rounded-md border border-blue-500/10 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {truncateHash(transfer.tx_hash, 6)}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                      <div className="mt-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white/[0.02] rounded-md border border-white/5 group/btn cursor-pointer transition-colors hover:bg-white/5">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">View on Market</span>
+                        <ExternalLink className="w-2.5 h-2.5 text-gray-500 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </ScrollArea>
     </aside>
