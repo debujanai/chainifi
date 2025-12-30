@@ -1,5 +1,10 @@
 import { HoldingsBoard } from "@/components/holdings-board";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  return <HoldingsBoard />;
+  return (
+    <PageWrapper>
+      <HoldingsBoard />
+    </PageWrapper>
+  );
 }

@@ -1,10 +1,10 @@
 import { PerpScreenerBoard } from "@/components/perp-screener-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <PerpScreenerBoard />;
+  return (
+    <PageWrapper>
+      <PerpScreenerBoard />
+    </PageWrapper>
+  );
 }

@@ -1,10 +1,10 @@
-import { TGMDexTradesBoard } from "@/components/tgm-dex-trades-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { TgmDexTradesBoard } from "@/components/tgm-dex-trades-board";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <TGMDexTradesBoard />;
+  return (
+    <PageWrapper>
+      <TgmDexTradesBoard />
+    </PageWrapper>
+  );
 }

@@ -1,10 +1,10 @@
-import { TGMJupDcaBoard } from "@/components/tgm-jup-dca-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { TgmJupDcaBoard } from "@/components/tgm-jup-dca-board";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <TGMJupDcaBoard />;
+  return (
+    <PageWrapper>
+      <TgmJupDcaBoard />
+    </PageWrapper>
+  );
 }

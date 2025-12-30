@@ -1,10 +1,10 @@
 import { AddressPerpPositionsBoard } from "@/components/address-perp-positions-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <AddressPerpPositionsBoard />;
+  return (
+    <PageWrapper>
+      <AddressPerpPositionsBoard />
+    </PageWrapper>
+  );
 }

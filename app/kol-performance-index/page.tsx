@@ -1,11 +1,10 @@
 import { KOLPerformanceIndexBoard } from "@/components/kol-performance-index-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <KOLPerformanceIndexBoard />;
+  return (
+    <PageWrapper>
+      <KOLPerformanceIndexBoard />
+    </PageWrapper>
+  );
 }
-

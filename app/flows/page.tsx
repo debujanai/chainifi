@@ -1,10 +1,10 @@
 import { FlowsBoard } from "@/components/flows-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <FlowsBoard />;
+  return (
+    <PageWrapper>
+      <FlowsBoard />
+    </PageWrapper>
+  );
 }

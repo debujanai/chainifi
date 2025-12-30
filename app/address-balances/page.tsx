@@ -1,10 +1,10 @@
 import { AddressBalancesBoard } from "@/components/address-balances-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <AddressBalancesBoard />;
+  return (
+    <PageWrapper>
+      <AddressBalancesBoard />
+    </PageWrapper>
+  );
 }

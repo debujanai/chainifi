@@ -1,10 +1,10 @@
-import { TGMPerpPnlLeaderboardBoard } from "@/components/tgm-perp-pnl-leaderboard-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { TgmPerpPnlLeaderboardBoard } from "@/components/tgm-perp-pnl-leaderboard-board";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <TGMPerpPnlLeaderboardBoard />;
+  return (
+    <PageWrapper>
+      <TgmPerpPnlLeaderboardBoard />
+    </PageWrapper>
+  );
 }

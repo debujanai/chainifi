@@ -1,10 +1,10 @@
-import { TGMTransfersBoard } from "@/components/tgm-transfers-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { TgmTransfersBoard } from "@/components/tgm-transfers-board";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <TGMTransfersBoard />;
+  return (
+    <PageWrapper>
+      <TgmTransfersBoard />
+    </PageWrapper>
+  );
 }

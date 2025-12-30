@@ -1,10 +1,10 @@
 import { AddressHistoricalBalancesBoard } from "@/components/address-historical-balances-board";
-import { ComingSoon } from "@/components/coming-soon";
-import { isProduction } from "@/lib/config";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export default function Page() {
-  if (isProduction) {
-    return <ComingSoon />;
-  }
-  return <AddressHistoricalBalancesBoard />;
+  return (
+    <PageWrapper>
+      <AddressHistoricalBalancesBoard />
+    </PageWrapper>
+  );
 }
