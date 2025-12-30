@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 }
 
 // These are the pages that are fully functional in production
-export const PUBLIC_PAGES = ['/holdings', '/dex-trades', '/perp-trades', '/'];
+export const PUBLIC_PAGES = ['/', '/kol-details', '/kol-performance-index'];
 
 // These are all the sections we have
 export const ALL_SECTIONS = ['Smart Money', 'Profiler', 'Token God Mode', 'Portfolio'];

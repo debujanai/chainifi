@@ -157,28 +157,26 @@ export function PropertiesPanel() {
         panels:w-80 panels:max-w-80 panels:border-l panels:border-[#20222f] panels:opacity-100 panels:pointer-events-auto
       `}
     >
-      <div className="px-5 py-5 flex flex-col gap-5 border-b border-[#20222f] bg-[#141723] sticky top-0 z-10">
+      <div className="px-4 py-4 flex flex-col gap-4 border-b border-[#20222f] bg-[#141723] sticky top-0 z-10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 bg-blue-500/10 border border-blue-500/20 rounded-md flex items-center justify-center">
-              <span className="text-blue-400 text-[10px] animate-pulse">⚡</span>
-            </div>
-            <span className="text-white font-semibold text-sm tracking-tight capitalize">Whale Tracker</span>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px] text-white">⚡</div>
+            <span className="text-white font-medium text-sm tracking-tight capitalize">Whale Tracker</span>
           </div>
           {loading && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping" />}
         </div>
 
-        {/* Premium Tab Switcher - Styled with dApp colors */}
+        {/* Tab Switcher - Styled to match NetflowsBoard aesthetics */}
         <div className="flex p-0.5 bg-[#171a26] rounded-md border border-[#20222f] self-stretch">
           {(['eth', 'sol'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`
-                        flex-1 py-1.5 text-[10px] font-medium rounded-sm transition-all duration-300 uppercase tracking-wider
+                        flex-1 py-1.5 text-[10px] font-medium rounded-sm transition-all duration-200
                         ${activeTab === tab
-                  ? "bg-[#20222f] text-gray-200 shadow-sm"
-                  : "text-gray-500 hover:text-gray-300"}
+                  ? "bg-[#20222f] text-gray-200 shadow-sm border border-[#2a2c38]"
+                  : "text-gray-500 hover:text-gray-300 hover:bg-[#20222f]/50"}
                     `}
             >
               {tab === 'eth' ? 'Ethereum' : 'Solana'}
@@ -187,8 +185,8 @@ export function PropertiesPanel() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 px-4 py-5" aria-label="Whale transfers content">
-        <div className="space-y-3 pb-8">
+      <ScrollArea className="flex-1" aria-label="Whale transfers content">
+        <div className="flex flex-col">
           {loading && currentTransfers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3 grayscale opacity-50">
               <div className="w-5 h-5 text-blue-400 animate-spin">⚡</div>
@@ -206,83 +204,90 @@ export function PropertiesPanel() {
                   key={transfer.id}
                   onClick={(e) => toggleExpand(transfer.id, e)}
                   className={`
-                            group relative bg-[#171a26] border rounded p-4 transition-all duration-300 overflow-hidden
-                            ${isExpanded
-                      ? 'border-blue-500/40 bg-[#1c1e2b] shadow-lg shadow-black/20'
-                      : 'border-[#20222f] hover:border-blue-500/20 hover:bg-[#1c1e2b]/80 hover:translate-y-[-2px]'}
-                        `}
+                        group relative border-b border-[#20222f] transition-all duration-200 cursor-pointer
+                        ${isExpanded ? 'bg-[#1c1e2b]' : 'bg-[#141723] hover:bg-[#1c1e2b]'}
+                  `}
                 >
-                  {/* Aesthetic Status Bar */}
+                  {/* Status Bar */}
                   <div className={`
-                            absolute left-0 top-0 bottom-0 w-[3px] transition-all
-                            ${isSell ? 'bg-red-500/60' : 'bg-green-500/60'}
-                        `} />
+                        absolute left-0 top-0 bottom-0 w-[2px] transition-all
+                        ${isSell ? 'bg-red-500/80' : 'bg-green-500/80'}
+                        ${isExpanded ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'}
+                  `} />
 
-                  {/* Header Row */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`
-                                    text-[9px] font-bold px-1.5 py-0.5 rounded-sm tracking-tighter uppercase
-                                    ${isSell ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}
-                                `}>
-                        {transfer.side}
-                      </span>
-                      <span className="text-[10px] text-gray-500 font-medium tabular-nums uppercase">
-                        {transfer.timeAgo}
-                      </span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      {isExpanded ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-                      )}
-                    </div>
-                  </div>
+                  {/* Main Content Row */}
+                  <div className="p-3 pl-4 flex flex-col gap-2">
 
-                  {/* Content Body */}
-                  <div className="flex flex-col gap-1.5 pl-1.5">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-[15px] font-bold text-white leading-none tracking-tight">
-                        {transfer.formattedAmount}
-                      </span>
-                      <span
-                        className="text-[11px] font-bold tracking-tight bg-white/5 px-1.5 py-0.5 rounded-sm border border-white/5"
-                        style={{ color: formatTokenColor(transfer.symbol) }}
-                      >
-                        {transfer.symbol.toUpperCase()}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-1 gap-2">
-                      <span className="text-[12px] text-gray-400 font-medium tracking-tight whitespace-nowrap">
-                        {transfer.formattedUsdValue}
-                      </span>
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-bold bg-[#20222f] px-2 py-0.5 rounded-full border border-white/5 min-w-0 max-w-[150px]">
-                        <span className="uppercase truncate shrink-0">{transfer.exchange.replace('uniswapv', 'Uni v')}</span>
-                        <span className="w-1 h-1 bg-gray-600 rounded-full shrink-0" />
-                        <span className="truncate">{transfer.pair}</span>
+                    {/* Header: Side & Time */}
+                    <div className="flex items-center justify-between z-10">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isSell ? 'text-red-400' : 'text-green-400'}`}>
+                          {transfer.side}
+                        </span>
+                        <span className="text-[10px] text-gray-500 tabular-nums">
+                          {transfer.timeAgo}
+                        </span>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
+                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                       </div>
                     </div>
+
+                    {/* Body: Amount, Symbol, Value */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-sm font-medium text-gray-200">
+                            {transfer.formattedAmount}
+                          </span>
+                          <span className="text-[10px] font-bold" style={{ color: formatTokenColor(transfer.symbol) }}>
+                            {transfer.symbol}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-gray-500 font-medium">
+                          {transfer.formattedUsdValue}
+                        </span>
+                      </div>
+
+                      {/* Pair Badge */}
+                      <div className="flex items-center gap-1.5 text-[9px] text-gray-400 bg-[#171a26] px-2 py-1 rounded border border-[#20222f] group-hover:border-[#303240] transition-colors">
+                        <span className="uppercase truncate max-w-[60px]">{transfer.exchange.replace('uniswapv', 'Uni v')}</span>
+                        <span className="w-0.5 h-0.5 bg-gray-600 rounded-full" />
+                        <span className="truncate max-w-[80px]">{transfer.pair}</span>
+                      </div>
+                    </div>
+
                   </div>
 
-                  {/* Expanded Details */}
+                  {/* Expanded Details - PRESERVED LOGIC and CONTENT */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-[#2a2d3d] grid gap-3 animate-in fade-in slide-in-from-top-2 duration-300 pl-1.5">
+                    <div className="mx-3 mb-3 p-3 bg-[#171a26] rounded border border-[#2a2d3d] grid gap-3 animate-in fade-in slide-in-from-top-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pair Address</span>
-                        <span className="text-[11px] text-blue-400/80 font-mono bg-blue-400/5 px-1.5 py-0.5 rounded-sm border border-blue-400/10">
+                        <span className="text-[10px] text-gray-500 font-bold">Pair Address</span>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(transfer.pair_id);
+                          }}
+                          className="text-[11px] text-blue-400/80 font-mono bg-blue-400/5 px-1.5 py-0.5 rounded-sm border border-blue-400/10 cursor-pointer hover:bg-blue-400/10 hover:text-blue-300 transition-colors"
+                        >
                           {truncateHash(transfer.pair_id, 8)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Maker</span>
-                        <span className="text-[11px] text-gray-300 font-mono bg-white/5 px-1.5 py-0.5 rounded-sm border border-white/5">
+                        <span className="text-[10px] text-gray-500 font-bold">Maker</span>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(transfer.maker);
+                          }}
+                          className="text-[11px] text-gray-300 font-mono bg-white/5 px-1.5 py-0.5 rounded-sm border border-white/5 cursor-pointer hover:bg-white/10 hover:text-white transition-colors"
+                        >
                           {truncateHash(transfer.maker, 8)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Tx Hash</span>
+                        <span className="text-[10px] text-gray-500 font-bold">Tx Hash</span>
                         <a
                           href={getExplorerUrl(transfer.chain, transfer.tx_hash)}
                           target="_blank"
@@ -294,10 +299,16 @@ export function PropertiesPanel() {
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
-                      <div className="mt-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white/[0.02] rounded-md border border-white/5 group/btn cursor-pointer transition-colors hover:bg-white/5">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">View on Market</span>
-                        <ExternalLink className="w-2.5 h-2.5 text-gray-500 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
-                      </div>
+                      <a
+                        href={`https://dexscreener.com/${activeTab === 'eth' ? 'ethereum' : 'solana'}/${transfer.pair_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white/[0.02] rounded-md border border-white/5 group/btn cursor-pointer transition-colors hover:bg-white/5 text-gray-400 hover:text-gray-200"
+                      >
+                        <span className="text-[10px] font-bold">View on Market</span>
+                        <ExternalLink className="w-2.5 h-2.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                      </a>
                     </div>
                   )}
                 </div>
