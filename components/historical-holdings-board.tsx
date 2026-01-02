@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, TrendingUp, Loader, Filter, Copy, ExternalLink, Plus, Globe, Calendar } from "lucide-react";
+import { MoreHorizontal, TrendingUp, Loader, Filter, Copy, ExternalLink, Plus, Globe, Calendar, Search } from "lucide-react";
 import { SocialIcon } from "@/components/icons/social-icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -336,21 +336,24 @@ export function HistoricalHoldingsBoard() {
           <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
             {/* Search Input (Left) */}
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Input
-                type="text"
-                placeholder="Search token or address..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
-              />
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                <Input
+                  type="text"
+                  placeholder="Search token or address..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                  className="pl-8 flex-1 h-8 text-xs bg-[#171a26] border-[#20222f] text-white placeholder:text-gray-500 min-w-[200px]"
+                />
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 px-3 text-xs bg-[#171a26] border-[#20222f] text-gray-400 hover:text-gray-200"
-                onClick={() => { setLoading(true); window.location.reload(); }}
-                disabled={loading}
+                className="h-8 px-3 text-xs bg-[#171a26] border-[#20222f] text-gray-400 hover:text-gray-200 hover:bg-[#20222f]"
+                onClick={() => setPage(1)}
               >
-                {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
+                <Search className="w-3.5 h-3.5 mr-1.5" />
+                Search
               </Button>
               {/* Market Cap Filter Dropdown */}
               <DropdownMenu>

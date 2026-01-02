@@ -48,7 +48,7 @@ export async function GET(request: Request) {
                 "X-API-Key": API_KEY,
                 "Accept": "application/json",
             },
-            next: { revalidate: 60 }, // Cache for 60 seconds to respect rate limits
+            next: { revalidate: 3600 }, // Cache for 1 hour (3600 seconds)
         });
 
         if (response.status === 429) {
