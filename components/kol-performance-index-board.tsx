@@ -256,107 +256,78 @@ export function KOLPerformanceIndexBoard() {
       </div>
 
       {/* Podium Section */}
-      {!isCurrentLoading && rawData.length >= 3 && (
-        <div className="px-4 py-6 border-b border-[#20222f]">
-          <div className="flex items-end justify-between gap-4 w-full">
-            {/* Rank 3 - Left */}
-            <div className="flex-1 flex flex-col items-center">
-              <div className="relative flex flex-col items-center justify-center p-4 w-full rounded-xl border border-amber-800/30 bg-gradient-to-b from-amber-700/10 to-[#171a26] shadow-lg shadow-amber-900/5 transition-all hover:bg-[#1a1d2b]">
-                <div className="absolute -top-3 flex items-center justify-center w-6 h-6 rounded-full border border-[#20222f] bg-[#141723] text-amber-700 font-bold text-xs z-10 shadow-sm">
-                  3
-                </div>
-                <div className="relative mb-3 w-12 h-12">
-                  <div className="w-full h-full rounded-full overflow-hidden border-2 border-amber-800/30">
-                    <img
-                      src={([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[2]).profile_image_url}
-                      alt="Rank 3"
-                      className="w-full h-full object-cover"
-                      onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
-                    />
+      {!isCurrentLoading && rawData.length >= 3 && (() => {
+        const sortedTop3 = [...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi)).slice(0, 3);
+        const [rank1, rank2, rank3] = sortedTop3;
+        
+        return (
+          <div className="px-2 sm:px-4 py-4 sm:py-6 border-b border-[#20222f]">
+            <div className="flex items-end justify-between gap-1.5 sm:gap-4 w-full">
+              {/* Rank 3 - Left */}
+              <div className="flex-1 flex flex-col items-center">
+                <div className="relative flex flex-col items-center justify-center p-2 sm:p-4 w-full rounded-lg sm:rounded-xl border border-amber-800/30 bg-gradient-to-b from-amber-700/10 to-[#171a26] shadow-lg shadow-amber-900/5 transition-all hover:bg-[#1a1d2b]">
+                  <div className="absolute -top-2 sm:-top-3 flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-[#20222f] bg-[#141723] text-amber-700 font-bold text-[10px] sm:text-xs z-10 shadow-sm">
+                    3
                   </div>
-                </div>
-                <div className="text-center w-full">
-                  <div className="font-semibold text-white text-xs truncate px-1">
-                    {([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[2]).profile_name || ([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[2]).username}
+                  <div className="relative mb-2 sm:mb-3 w-8 h-8 sm:w-12 sm:h-12">
+                    <div className="w-full h-full rounded-full overflow-hidden border-2 border-amber-800/30">
+                      <img src={rank3.profile_image_url} alt="Rank 3" className="w-full h-full object-cover" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                    </div>
                   </div>
-                  <div className="text-gray-500 text-[9px] mb-1.5 truncate">
-                    @{([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[2]).username}
-                  </div>
-                  <div className="text-emerald-400 font-bold text-xs">
-                    {formatROI(([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[2]).avg_roi)}
+                  <div className="text-center w-full">
+                    <div className="font-semibold text-white text-[10px] sm:text-xs truncate px-0.5 sm:px-1">{rank3.profile_name || rank3.username}</div>
+                    <div className="text-gray-500 text-[8px] sm:text-[9px] mb-1 sm:mb-1.5 truncate">@{rank3.username}</div>
+                    <div className="text-emerald-400 font-bold text-[10px] sm:text-xs">{formatROI(rank3.avg_roi)}</div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Rank 1 - Center */}
-            <div className="flex-1 flex flex-col items-center z-10 -mt-6">
-              <div className="relative flex flex-col items-center justify-center p-5 w-full rounded-xl border border-yellow-500/30 bg-gradient-to-b from-yellow-500/10 to-[#171a26] shadow-lg shadow-yellow-900/10 transition-all hover:from-yellow-500/20">
-                <div className="absolute -top-4 text-yellow-500 animate-bounce duration-1000">
-                  <Crown size={24} fill="currentColor" />
-                </div>
-                <div className="relative mb-3 w-16 h-16">
-                  <div className="w-full h-full rounded-full overflow-hidden border-2 border-yellow-500">
-                    <img
-                      src={([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[0]).profile_image_url}
-                      alt="Rank 1"
-                      className="w-full h-full object-cover"
-                      onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
-                    />
+              {/* Rank 1 - Center */}
+              <div className="flex-1 flex flex-col items-center z-10 -mt-4 sm:-mt-6">
+                <div className="relative flex flex-col items-center justify-center p-2.5 sm:p-5 w-full rounded-lg sm:rounded-xl border border-yellow-500/30 bg-gradient-to-b from-yellow-500/10 to-[#171a26] shadow-lg shadow-yellow-900/10 transition-all hover:from-yellow-500/20">
+                  <div className="absolute -top-3 sm:-top-4 text-yellow-500 animate-bounce duration-1000">
+                    <Crown size={18} className="sm:hidden" fill="currentColor" />
+                    <Crown size={24} className="hidden sm:block" fill="currentColor" />
                   </div>
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-black font-bold text-[10px] px-1.5 rounded-sm">
-                    #1
+                  <div className="relative mb-2 sm:mb-3 w-10 h-10 sm:w-16 sm:h-16">
+                    <div className="w-full h-full rounded-full overflow-hidden border-2 border-yellow-500">
+                      <img src={rank1.profile_image_url} alt="Rank 1" className="w-full h-full object-cover" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                    </div>
+                    <div className="absolute -bottom-1.5 sm:-bottom-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-black font-bold text-[8px] sm:text-[10px] px-1 sm:px-1.5 rounded-sm">
+                      #1
+                    </div>
                   </div>
-                </div>
-                <div className="text-center w-full mt-1">
-                  <div className="font-bold text-white text-sm truncate px-1">
-                    {([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[0]).profile_name || ([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[0]).username}
-                  </div>
-                  <div className="text-yellow-500/70 text-[10px] mb-2 truncate">
-                    @{([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[0]).username}
-                  </div>
-                  <div className="text-emerald-400 font-bold text-base">
-                    {formatROI(([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[0]).avg_roi)}
-                  </div>
-                  <div className="text-[10px] text-gray-500 mt-1">
-                    Win Rate: {([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[0]).success_rate.toFixed(1)}%
+                  <div className="text-center w-full mt-0.5 sm:mt-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate px-0.5 sm:px-1">{rank1.profile_name || rank1.username}</div>
+                    <div className="text-yellow-500/70 text-[8px] sm:text-[10px] mb-1 sm:mb-2 truncate">@{rank1.username}</div>
+                    <div className="text-emerald-400 font-bold text-sm sm:text-base">{formatROI(rank1.avg_roi)}</div>
+                    <div className="text-[8px] sm:text-[10px] text-gray-500 mt-0.5 sm:mt-1">Win Rate: {rank1.success_rate.toFixed(1)}%</div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Rank 2 - Right */}
-            <div className="flex-1 flex flex-col items-center">
-              <div className="relative flex flex-col items-center justify-center p-4 w-full rounded-xl border border-slate-500/30 bg-gradient-to-b from-slate-400/10 to-[#171a26] shadow-lg shadow-slate-900/5 transition-all hover:bg-[#1a1d2b]">
-                <div className="absolute -top-3 flex items-center justify-center w-6 h-6 rounded-full border border-[#20222f] bg-[#141723] text-gray-300 font-bold text-xs z-10 shadow-sm">
-                  2
-                </div>
-                <div className="relative mb-3 w-12 h-12">
-                  <div className="w-full h-full rounded-full overflow-hidden border-2 border-gray-500/30">
-                    <img
-                      src={([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[1]).profile_image_url}
-                      alt="Rank 2"
-                      className="w-full h-full object-cover"
-                      onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
-                    />
+              {/* Rank 2 - Right */}
+              <div className="flex-1 flex flex-col items-center">
+                <div className="relative flex flex-col items-center justify-center p-2 sm:p-4 w-full rounded-lg sm:rounded-xl border border-slate-500/30 bg-gradient-to-b from-slate-400/10 to-[#171a26] shadow-lg shadow-slate-900/5 transition-all hover:bg-[#1a1d2b]">
+                  <div className="absolute -top-2 sm:-top-3 flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-[#20222f] bg-[#141723] text-gray-300 font-bold text-[10px] sm:text-xs z-10 shadow-sm">
+                    2
                   </div>
-                </div>
-                <div className="text-center w-full">
-                  <div className="font-semibold text-white text-xs truncate px-1">
-                    {([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[1]).profile_name || ([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[1]).username}
+                  <div className="relative mb-2 sm:mb-3 w-8 h-8 sm:w-12 sm:h-12">
+                    <div className="w-full h-full rounded-full overflow-hidden border-2 border-gray-500/30">
+                      <img src={rank2.profile_image_url} alt="Rank 2" className="w-full h-full object-cover" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                    </div>
                   </div>
-                  <div className="text-gray-500 text-[9px] mb-1.5 truncate">
-                    @{([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[1]).username}
-                  </div>
-                  <div className="text-emerald-400 font-bold text-xs">
-                    {formatROI(([...rawData].sort((a, b) => parseFloat(b.avg_roi) - parseFloat(a.avg_roi))[1]).avg_roi)}
+                  <div className="text-center w-full">
+                    <div className="font-semibold text-white text-[10px] sm:text-xs truncate px-0.5 sm:px-1">{rank2.profile_name || rank2.username}</div>
+                    <div className="text-gray-500 text-[8px] sm:text-[9px] mb-1 sm:mb-1.5 truncate">@{rank2.username}</div>
+                    <div className="text-emerald-400 font-bold text-[10px] sm:text-xs">{formatROI(rank2.avg_roi)}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <ScrollArea className="flex-1">
         <div className="py-4 pr-4 pl-0">

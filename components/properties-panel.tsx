@@ -151,9 +151,9 @@ export function PropertiesPanel() {
         fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 flex flex-col bg-[#141723] flex-none
         transform transition-all duration-300 ease-in-out z-40
         ${rightOpen ? "" : "translate-x-full"}
-        lg:static lg:right-auto lg:top-auto lg:h-screen lg:flex lg:flex-col lg:translate-x-0
+        lg:fixed lg:right-0 lg:top-0 lg:h-screen lg:flex lg:flex-col lg:translate-x-0
         ${rightOpen ? "lg:w-80 lg:max-w-80 lg:border-l border-[#20222f]" : "lg:w-0 lg:max-w-0 lg:border-0 lg:overflow-hidden lg:opacity-0 lg:pointer-events-none"}
-        panels:static panels:right-auto panels:top-auto panels:h-screen panels:flex panels:flex-col panels:translate-x-0
+        panels:fixed panels:right-0 panels:top-0 panels:h-screen panels:flex panels:flex-col panels:translate-x-0
         panels:w-80 panels:max-w-80 panels:border-l panels:border-[#20222f] panels:opacity-100 panels:pointer-events-auto
       `}
     >

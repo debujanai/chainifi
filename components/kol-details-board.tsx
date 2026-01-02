@@ -1066,17 +1066,6 @@ export function KOLDetailsBoard() {
               >
                 {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Search"}
               </Button>
-              {username && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-xs bg-[#171a26] border-[#20222f] text-gray-400 hover:text-gray-200"
-                  onClick={() => fetchData(true)}
-                  disabled={loading}
-                >
-                  {loading ? <Loader className="w-3 h-3 animate-spin" /> : "Refresh"}
-                </Button>
-              )}
             </div>
           </div>
 
@@ -1211,8 +1200,8 @@ export function KOLDetailsBoard() {
 
             {groupedTokens.length > 0 && (
               <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="sticky left-0 z-10 bg-[#141723] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-3 px-4">
+                  <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-blue-500" />
                     <span className="text-sm font-medium text-white">Token Mentions</span>
                     <span className="text-xs text-gray-500">{totalMentions}</span>
@@ -1222,7 +1211,228 @@ export function KOLDetailsBoard() {
                   </Button>
                 </div>
 
-                <div className="space-y-1">
+                {/* Mobile Card View */}
+                <div className="lg:hidden space-y-2 pl-4 w-full">
+                  {groupedTokens.map((group) => {
+                    const isExpanded = expandedRow === group.token_id;
+                    const firstMention = group.firstMention;
+                    const latestMention = group.latestMention;
+                    const metaKey = `${group.chain}-${group.token_id}`;
+                    const meta = tokenMetadata[metaKey];
+                    const roi = calculateROI(latestMention.usd_price, firstMention.other_data.first_mention_price);
+                    const sentiment = firstMention.other_data.first_mention_sentiment || firstMention.sentiment;
+
+                    return (
+                      <div key={`mobile-${group.token_id}`} className="w-full">
+                        <div
+                          className={`w-full bg-[#171a26] border border-[#20222f] ${isExpanded ? 'rounded-t-lg border-b-0' : 'rounded-lg'} p-3 cursor-pointer active:bg-[#1c1e2b]`}
+                          onClick={() => handleRowClick(group)}
+                        >
+                          {/* Top Row: Token Info & Price */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="relative h-8 w-8 shrink-0">
+                                <div className="h-8 w-8 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center">
+                                  {meta?.logo ? (
+                                    <img src={meta.logo} alt={group.token_symbol} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="text-[10px] text-gray-500 font-medium">
+                                      {group.token_symbol.slice(0, 2).toUpperCase()}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#171a26] ${sentiment === 'positive' ? 'bg-emerald-500' : sentiment === 'negative' ? 'bg-rose-500' : 'bg-gray-500'}`} />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-blue-300 font-medium">${group.token_symbol}</span>
+                                  <Badge className={`text-[8px] h-4 px-1 border ${getChainColor(group.chain)}`}>
+                                    {group.chain}
+                                  </Badge>
+                                </div>
+                                <div className="text-[10px] text-gray-500">{group.mentions.length} mention{group.mentions.length > 1 ? 's' : ''}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm text-white font-medium">{formatPrice(latestMention.usd_price)}</div>
+                              <div className="text-xs text-sky-400">{formatMcap(latestMention.mcap)}</div>
+                            </div>
+                          </div>
+
+                          {/* Bottom Row: Performance & Actions */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div>
+                                <div className="text-[9px] text-gray-500 uppercase">7d</div>
+                                <div className={`text-xs font-medium ${parseFloat(firstMention.other_data._7d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                  {formatImpact(firstMention.other_data._7d_impact)}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-[9px] text-gray-500 uppercase">30d</div>
+                                <div className={`text-xs font-medium ${parseFloat(firstMention.other_data._30d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                  {formatImpact(firstMention.other_data._30d_impact)}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <a
+                                href={firstMention.tweet_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1.5 rounded bg-[#20222f] hover:bg-[#272936]"
+                              >
+                                <svg width={12} height={12} viewBox="0 0 24 24" fill="currentColor" className="text-gray-400">
+                                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                </svg>
+                              </a>
+                              <a
+                                href={`https://dexscreener.com/${group.chain.toLowerCase()}/${group.pair_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1.5 rounded bg-[#20222f] hover:bg-[#272936]"
+                              >
+                                <ExternalLink className="w-3 h-3 text-gray-400" />
+                              </a>
+                              <div className="w-5 h-5 flex items-center justify-center">
+                                {isExpanded ? (
+                                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Mobile Expanded Panel */}
+                        {isExpanded && (
+                          <div className="w-full bg-[#171a26] border-l border-r border-b border-[#20222f] rounded-b-lg p-3">
+                            <TokenChart
+                              group={group}
+                              chartData={chartData}
+                              loading={chartLoading}
+                              tokenLogo={meta?.logo || null}
+                              username={username}
+                              timeframe={chartTimeframe}
+                            />
+
+                            {/* Price & Market Cap Info */}
+                            <div className="mt-4">
+                              <div className="text-xs font-medium text-white mb-2">Price & Market Cap</div>
+                              <div className="grid grid-cols-1 gap-2 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                <div className="flex justify-between">
+                                  <span className="text-[10px] text-gray-500">First Mention Price</span>
+                                  <span className="text-sm font-medium text-white">{formatPrice(firstMention.other_data.first_mention_price)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[10px] text-gray-500">Current Price</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-white">{formatPrice(latestMention.usd_price)}</span>
+                                    <span className={`text-xs font-medium ${roi >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{formatROI(roi)}</span>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[10px] text-gray-500">First Mention MCap</span>
+                                  <span className="text-sm font-medium text-sky-400">{formatMcap(firstMention.other_data.first_mention_mcap)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[10px] text-gray-500">Current MCap</span>
+                                  <span className="text-sm font-medium text-sky-400">{formatMcap(latestMention.mcap)}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Sentiment Info */}
+                            <div className="mt-4">
+                              <div className="text-xs font-medium text-white mb-2">Sentiment</div>
+                              <div className="grid grid-cols-1 gap-2 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] text-gray-500">First Mention</span>
+                                  <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 ${getSentimentColor(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}`}>
+                                    {getSentimentIcon(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}
+                                    {getSentimentText(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}
+                                  </Badge>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] text-gray-500">Latest</span>
+                                  <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 ${getSentimentColor(latestMention.sentiment)}`}>
+                                    {getSentimentIcon(latestMention.sentiment)}
+                                    {getSentimentText(latestMention.sentiment)}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Performance */}
+                            <div className="mt-4">
+                              <div className="text-xs font-medium text-white mb-2">Performance</div>
+                              <div className="grid grid-cols-3 gap-2 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                <div className="text-center">
+                                  <div className="text-[9px] text-gray-500 mb-1">24h</div>
+                                  <div className={`text-xs font-medium ${parseFloat(firstMention.other_data._24h_impcat) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                    {formatImpact(firstMention.other_data._24h_impcat)}
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-[9px] text-gray-500 mb-1">7d</div>
+                                  <div className={`text-xs font-medium ${parseFloat(firstMention.other_data._7d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                    {formatImpact(firstMention.other_data._7d_impact)}
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-[9px] text-gray-500 mb-1">30d</div>
+                                  <div className={`text-xs font-medium ${parseFloat(firstMention.other_data._30d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                    {formatImpact(firstMention.other_data._30d_impact)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* All Mentions */}
+                            <div className="mt-4">
+                              <div className="text-xs font-medium text-white mb-2">All Mentions ({group.mentions.length})</div>
+                              <div className="space-y-2">
+                                {group.mentions.map((mention, idx) => (
+                                  <div key={idx} className="flex items-center justify-between p-2 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                    <div className="flex flex-col gap-1">
+                                      <Badge className={`text-[8px] h-4 px-1 border flex items-center gap-1 w-fit ${getSentimentColor(mention.sentiment)}`}>
+                                        {getSentimentIcon(mention.sentiment)}
+                                        {getSentimentText(mention.sentiment)}
+                                      </Badge>
+                                      <span className="text-[9px] text-gray-500">{formatTimestamp(mention.timestamp)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-right">
+                                        <div className="text-xs text-white font-medium">{formatPrice(mention.usd_price)}</div>
+                                        <div className="text-[9px] text-gray-500">{formatMcap(mention.mcap)}</div>
+                                      </div>
+                                      <a
+                                        href={mention.tweet_link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1.5 rounded bg-[#20222f]"
+                                      >
+                                        <svg width={10} height={10} viewBox="0 0 24 24" fill="currentColor" className="text-gray-400">
+                                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                        </svg>
+                                      </a>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden lg:block space-y-1">
                   {/* Table Header */}
                   <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
                     <div className="sticky left-0 z-10 bg-[#141723] flex items-stretch pl-4">
@@ -1434,7 +1644,7 @@ export function KOLDetailsBoard() {
 
                           {/* Expanded Chart Panel */}
                           {isExpanded && (
-                            <div className="bg-[#171a26] border-l border-r border-b border-[#20222f] rounded-b-lg p-4 mb-1">
+                            <div className="ml-0 lg:ml-4 bg-[#171a26] border-l border-r border-b border-[#20222f] rounded-b-lg p-3 sm:p-4 mb-1">
                               <TokenChart
                                 group={group}
                                 chartData={chartData}
@@ -1447,15 +1657,15 @@ export function KOLDetailsBoard() {
                               {/* Price & Market Cap Info */}
                               <div className="mt-4">
                                 <div className="text-xs font-medium text-white mb-2">Price & Market Cap</div>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">First Mention Price</div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">First Mention Price</div>
                                     <div className="text-sm font-medium text-white">
                                       {formatPrice(firstMention.other_data.first_mention_price)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">Current Price</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">Current Price</div>
                                     <div className="flex items-center gap-2">
                                       <span className="text-sm font-medium text-white">{formatPrice(latestMention.usd_price)}</span>
                                       <span className={`text-xs font-medium ${roi >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
@@ -1463,14 +1673,14 @@ export function KOLDetailsBoard() {
                                       </span>
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">First Mention MCap</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">First Mention MCap</div>
                                     <div className="text-sm font-medium text-sky-400">
                                       {formatMcap(firstMention.other_data.first_mention_mcap)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">Current MCap</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">Current MCap</div>
                                     <div className="text-sm font-medium text-sky-400">
                                       {formatMcap(latestMention.mcap)}
                                     </div>
@@ -1481,16 +1691,16 @@ export function KOLDetailsBoard() {
                               {/* Sentiment Info */}
                               <div className="mt-4">
                                 <div className="text-xs font-medium text-white mb-2">Sentiment</div>
-                                <div className="grid grid-cols-2 gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">First Mention Sentiment</div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                  <div className="flex justify-between items-center sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">First Mention Sentiment</div>
                                     <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 w-fit ${getSentimentColor(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}`}>
                                       {getSentimentIcon(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}
                                       {getSentimentText(firstMention.other_data.first_mention_sentiment || firstMention.sentiment)}
                                     </Badge>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">Latest Sentiment</div>
+                                  <div className="flex justify-between items-center sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">Latest Sentiment</div>
                                     <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 w-fit ${getSentimentColor(latestMention.sentiment)}`}>
                                       {getSentimentIcon(latestMention.sentiment)}
                                       {getSentimentText(latestMention.sentiment)}
@@ -1502,39 +1712,39 @@ export function KOLDetailsBoard() {
                               {/* Performance After Mention - All Timeframes */}
                               <div className="mt-4">
                                 <div className="text-xs font-medium text-white mb-2">Performance After First Mention</div>
-                                <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">24h</div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">24h</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._24h_impcat) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._24h_impcat)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">3d</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">3d</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._3d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._3d_impact)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">7d</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">7d</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._7d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._7d_impact)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">14d</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">14d</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._14d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._14d_impact)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">30d</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">30d</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._30d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._30d_impact)}
                                     </div>
                                   </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-1">90d</div>
+                                  <div className="flex justify-between sm:block">
+                                    <div className="text-[10px] text-gray-500 mb-0 sm:mb-1">90d</div>
                                     <div className={`text-sm font-medium ${parseFloat(firstMention.other_data._90d_impact) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                       {formatImpact(firstMention.other_data._90d_impact)}
                                     </div>
@@ -1547,16 +1757,17 @@ export function KOLDetailsBoard() {
                                 <div className="text-xs font-medium text-white mb-2">All Mentions ({group.mentions.length})</div>
                                 <div className="space-y-2">
                                   {group.mentions.map((mention, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
-                                      <div className="flex items-center gap-3">
+                                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 p-3 rounded-lg border border-[#20222f] bg-[#0d0f14]">
+                                      {/* Mobile: Stack vertically, Desktop: Row */}
+                                      <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
                                         <Badge className={`text-[9px] h-5 px-1.5 border flex items-center gap-1 ${getSentimentColor(mention.sentiment)}`}>
                                           {getSentimentIcon(mention.sentiment)}
                                           {getSentimentText(mention.sentiment)}
                                         </Badge>
                                         <span className="text-[10px] text-gray-500">{formatTimestamp(mention.timestamp)}</span>
                                       </div>
-                                      <div className="flex items-center gap-4">
-                                        <div className="text-right">
+                                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                                        <div className="sm:text-right">
                                           <div className="text-xs text-white font-medium">{formatPrice(mention.usd_price)}</div>
                                           <div className="text-[10px] text-gray-500">{formatMcap(mention.mcap)}</div>
                                         </div>

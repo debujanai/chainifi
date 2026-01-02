@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, Plus, Search, TrendingUp, Wallet, Clock, ArrowLeftRight, BarChart3, Repeat, FileText, Users, Network, DollarSign, Tag, Filter, Activity, ArrowRight, ArrowUpDown, Send, Trophy, User, Waves } from "lucide-react";
+import { ChevronDown, Plus, Search, TrendingUp, Wallet, Clock, ArrowLeftRight, BarChart3, Repeat, FileText, Users, Network, DollarSign, Tag, Filter, Activity, ArrowRight, ArrowUpDown, Send, Trophy, User, Waves, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,7 +16,7 @@ export function Sidebar() {
       id="app-left-sidebar"
       aria-label="Primary navigation"
       className={`
-        lg:static lg:translate-x-0 lg:w-60 lg:h-screen lg:flex lg:flex-col
+        lg:fixed lg:left-0 lg:top-0 lg:translate-x-0 lg:w-60 lg:h-screen lg:flex lg:flex-col
         fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-60 flex flex-col
         border-r border-[#20222f] bg-[#1c1e2b]
         transform transition-transform duration-300 ease-in-out z-40
@@ -41,7 +41,7 @@ export function Sidebar() {
             </Button>
             <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
               <Link href="/holdings">
-                <Wallet className="w-4 h-4 text-blue-400" /> Holdings
+                <Wallet className="w-4 h-4 text-blue-400" /> Smart Holdings
               </Link>
             </Button>
             <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
@@ -77,6 +77,11 @@ export function Sidebar() {
             <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
               <Link href="/whale-tracker">
                 <Waves className="w-4 h-4 text-teal-400" /> Whale Tracker
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full justify-start gap-2 h-7 text-sm text-gray-300 hover:bg-[#20222f] font-normal">
+              <Link href="/encrypted-messages">
+                <Lock className="w-4 h-4 text-indigo-400" /> Encrypted Messages
               </Link>
             </Button>
           </div>
