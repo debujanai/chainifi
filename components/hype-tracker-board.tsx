@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreHorizontal, TrendingUp, Loader, Filter, Copy, ExternalLink, Plus } from "lucide-react";
+import { MoreHorizontal, TrendingUp, Loader, Filter, Copy, ExternalLink, Plus, Globe } from "lucide-react";
+import { SocialIcon } from "@/components/icons/social-icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface HypeTrackerPair {
     pair: string;
@@ -30,27 +32,47 @@ interface HypeTrackerPair {
     mcap: number;
 }
 
-function formatUSD(value: number): string {
-    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
-    return `$${value.toFixed(0)}`;
+interface TokenMetadata {
+    logo: string | null;
+    websites: { url: string }[];
+    socials: { platform: string; type?: string; handle: string; url: string }[];
 }
 
-function formatMarketCap(value: number): string {
-    if (value >= 1000000000) return `$${(value / 1000000000).toFixed(2)}B`;
-    if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
-    return `$${value.toFixed(0)}`;
+function formatUSD(value: number | null | undefined): string {
+    if (value == null || isNaN(value)) return "$0";
+    const num = Number(value);
+    if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
+    return `$${num.toFixed(0)}`;
 }
 
-function formatPrice(value: number): string {
-    if (value >= 1) return value.toFixed(4);
-    if (value >= 0.0001) return value.toFixed(6);
-    return value.toExponential(2);
+function formatMarketCap(value: number | null | undefined): string {
+    if (value == null || isNaN(value) || value === 0) return "$0";
+    const num = Number(value);
+    if (num >= 1000000000) return `$${(num / 1000000000).toFixed(2)}B`;
+    if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
+    return `$${num.toFixed(0)}`;
 }
 
-function formatPercent(value: number): string {
-    const sign = value > 0 ? "+" : "";
-    return `${sign}${value.toFixed(2)}%`;
+function formatPrice(value: number | null | undefined): string {
+    if (value == null || isNaN(value)) return "0";
+    const num = Number(value);
+    if (num >= 1) return num.toFixed(4);
+    if (num >= 0.0001) return num.toFixed(6);
+    return num.toExponential(2);
+}
+
+function formatPercent(value: number | null | undefined): string {
+    if (value == null || isNaN(value)) return "+0.00%";
+    const num = Number(value);
+    const sign = num > 0 ? "+" : "";
+    return `${sign}${num.toFixed(2)}%`;
+}
+
+function formatNumber(value: number | null | undefined): string {
+    if (value == null || isNaN(value)) return "0";
+    const num = Number(value);
+    return num.toLocaleString();
 }
 
 function formatDate(timestamp: number): string {
@@ -75,6 +97,13 @@ function getChainColor(chain: string): string {
     if (c === "bsc") return "#f3ba2f";
     if (c === "avalanche") return "#e84142";
     return "#eab308";
+}
+
+function formatChainNameForDisplay(chain: string): string {
+    const c = chain.toLowerCase();
+    if (c === "eth") return "Ethereum";
+    if (c === "bsc") return "BSC";
+    return chain.charAt(0).toUpperCase() + chain.slice(1);
 }
 
 interface CachedData {
@@ -108,6 +137,9 @@ export function HypeTrackerBoard() {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [mcapFilter, setMcapFilter] = useState<"all" | "large" | "mid" | "small" | "micro">("all");
 
+    // Metadata State (Cache)
+    const [tokenMetadata, setTokenMetadata] = useState<Record<string, TokenMetadata>>({});
+
     // Load cached data from localStorage
     const loadCachedData = (chain: string, pageNum: number): CachedData | null => {
         try {
@@ -138,6 +170,35 @@ export function HypeTrackerBoard() {
             // Ignore localStorage errors
         }
     };
+
+    // Helper to map chain name for metadata API
+    const mapChainForMetadata = (chain: string): string => {
+        const c = chain.toLowerCase();
+        if (c === "eth") return "ethereum";
+        return c;
+    };
+
+    // Fetch Metadata for visible items
+    useEffect(() => {
+        if (filteredData.length === 0) return;
+
+        filteredData.forEach(async (item) => {
+            const key = `${selectedChain}-${item.base_token_id}`;
+            // If already fetched, skip
+            if (tokenMetadata[key]) return;
+
+            try {
+                const metadataChain = mapChainForMetadata(selectedChain);
+                const res = await fetch(`/api/token-metadata?chain=${metadataChain}&address=${item.base_token_id}`);
+                if (res.ok) {
+                    const meta = await res.json();
+                    setTokenMetadata(prev => ({ ...prev, [key]: meta }));
+                }
+            } catch (e) {
+                console.error("Failed to fetch metadata for", item.base_symbol);
+            }
+        });
+    }, [filteredData, selectedChain]);
 
     // Fetch Raw Data
     useEffect(() => {
@@ -334,7 +395,7 @@ export function HypeTrackerBoard() {
                                         `}
                                         onClick={() => { setSelectedChain(chain); setPage(1); }}
                                     >
-                                        {chain.charAt(0).toUpperCase() + chain.slice(1)}
+                                        {formatChainNameForDisplay(chain)}
                                     </Button>
                                 ))}
                             </div>
@@ -363,7 +424,7 @@ export function HypeTrackerBoard() {
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="sticky left-0 z-10 bg-[#141723] pl-4 pr-3 py-2 rounded-l flex items-center gap-2">
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getChainColor(selectedChain) }} />
-                                        <span className="text-sm font-medium text-white">{selectedChain.charAt(0).toUpperCase() + selectedChain.slice(1)}</span>
+                                        <span className="text-sm font-medium text-white">{formatChainNameForDisplay(selectedChain)}</span>
                                         <span className="text-xs text-gray-500">{totalCount}</span>
                                     </div>
                                     <Button variant="ghost" size="icon" className="h-5 w-5 ml-auto hover:bg-[#20222f]">
@@ -374,13 +435,11 @@ export function HypeTrackerBoard() {
                                 <div className="space-y-1">
                                     {/* Header Row */}
                                     <div className="flex items-stretch text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">
-                                        <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[200px] py-2 pl-7 pr-3 rounded-l border-y border-l border-transparent">
+                                        <div className="sticky left-0 z-10 bg-[#141723] flex items-center gap-3 min-w-[160px] py-2 pl-7 pr-3 rounded-l border-y border-l border-transparent">
                                             <div className="h-7 w-7" />
-                                            <div className="min-w-[80px]">Token</div>
+                                            <div className="min-w-[60px]">Token</div>
                                         </div>
                                         <div className="flex-1 flex items-center justify-end min-w-0 gap-0 py-2 pr-3 border-y border-r border-transparent">
-                                            <div className="w-[140px] text-center">Pair Address</div>
-                                            <div className="w-[100px] text-center">Token ID</div>
                                             <button
                                                 onClick={() => { if (sortBy === "virality") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("virality"); setPage(1); }}
                                                 className={`w-[80px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "virality" ? "text-blue-400" : ""}`}
@@ -411,7 +470,7 @@ export function HypeTrackerBoard() {
                                             >
                                                 Holders {sortBy === "holders" && (sortDirection === "DESC" ? "↓" : "↑")}
                                             </button>
-                                            <div className="w-[80px] text-center">Price</div>
+                                            <div className="w-[90px] text-center">Price</div>
                                             <button
                                                 onClick={() => { if (sortBy === "6h") setSortDirection(d => d === "DESC" ? "ASC" : "DESC"); else setSortBy("6h"); setPage(1); }}
                                                 className={`w-[90px] text-center cursor-pointer hover:text-gray-300 transition-colors ${sortBy === "6h" ? "text-blue-400" : ""}`}
@@ -436,7 +495,6 @@ export function HypeTrackerBoard() {
                                             >
                                                 7d {sortBy === "7d" && (sortDirection === "DESC" ? "↓" : "↑")}
                                             </button>
-                                            <div className="w-[100px] text-center">Created</div>
                                         </div>
                                     </div>
 
@@ -450,7 +508,7 @@ export function HypeTrackerBoard() {
                                                 >
                                                     {/* Sticky Column - Token */}
                                                     <div className="sticky left-0 z-10 flex items-stretch pl-4 bg-[#141723]">
-                                                        <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[200px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
+                                                        <div className="bg-[#171a26] group-hover:bg-[#1c1e2b] border-l border-y border-[#20222f] group-hover:border-[#272936] flex items-center gap-2 min-w-[160px] ml-0 pl-3 py-2.5 rounded-l transition-colors duration-150">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
@@ -458,72 +516,98 @@ export function HypeTrackerBoard() {
                                                             >
                                                                 <MoreHorizontal className="w-4 h-4 text-gray-400" />
                                                             </Button>
-                                                            {/* Logo Placeholder */}
-                                                            <div className="h-7 w-7 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
-                                                                <div className="text-[10px] text-gray-500">{item.base_symbol?.slice(0, 1) || "?"}</div>
-                                                            </div>
-                                                            <div className="flex flex-col min-w-0">
-                                                                <span className="text-xs text-blue-300 font-medium whitespace-nowrap">
-                                                                    {item.base_symbol || "N/A"}
-                                                                </span>
-                                                                <span className="text-[10px] text-gray-500 truncate">
-                                                                    {item.base_name || "N/A"}
-                                                                </span>
-                                                            </div>
+
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <button className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                                                                        {/* Logo */}
+                                                                        <div className="h-7 w-7 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center shrink-0">
+                                                                            {tokenMetadata[`${selectedChain}-${item.base_token_id}`]?.logo ? (
+                                                                                <img
+                                                                                    src={tokenMetadata[`${selectedChain}-${item.base_token_id}`].logo!}
+                                                                                    alt={item.base_symbol}
+                                                                                    className="w-full h-full object-cover"
+                                                                                />
+                                                                            ) : (
+                                                                                <div className="text-[10px] text-gray-500">{item.base_symbol?.slice(0, 1) || "?"}</div>
+                                                                            )}
+                                                                        </div>
+                                                                        <span className="text-xs text-blue-300 font-medium whitespace-nowrap">
+                                                                            {item.base_symbol || "N/A"}
+                                                                        </span>
+                                                                    </button>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent side="top" align="start" className="w-64 p-3 bg-[#1c1e2b] border-[#272936]">
+                                                                    <div className="flex flex-col gap-3">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-10 h-10 flex-shrink-0">
+                                                                                {tokenMetadata[`${selectedChain}-${item.base_token_id}`]?.logo ? (
+                                                                                    <img src={tokenMetadata[`${selectedChain}-${item.base_token_id}`].logo!} alt={item.base_symbol} className="w-10 h-10 rounded-full object-cover" />
+                                                                                ) : (
+                                                                                    <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm font-bold border border-blue-500/30">
+                                                                                        {item.base_symbol?.slice(0, 2) || "?"}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="text-sm font-medium text-white">{item.base_symbol}</div>
+                                                                                <div className="text-xs text-gray-400">{item.base_name || "N/A"}</div>
+                                                                                <div className="text-xs text-gray-500">{formatChainNameForDisplay(selectedChain)} • {formatDate(item.pair_created_timestamp)}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 p-2 bg-[#141723] rounded border border-[#20222f]">
+                                                                            <span className="text-xs text-gray-400 font-mono flex-1 truncate">{item.base_token_id}</span>
+                                                                            <button onClick={() => navigator.clipboard.writeText(item.base_token_id)} className="p-1 hover:bg-[#20222f] rounded">
+                                                                                <Copy className="w-3 h-3 text-gray-500 hover:text-gray-300" />
+                                                                            </button>
+                                                                            <a href={`https://${selectedChain === 'eth' ? 'etherscan.io' : selectedChain === 'solana' ? 'solscan.io' : `${selectedChain}scan.com`}/token/${item.base_token_id}`} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-[#20222f] rounded">
+                                                                                <ExternalLink className="w-3 h-3 text-gray-500 hover:text-gray-300" />
+                                                                            </a>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 p-2 bg-[#141723] rounded border border-[#20222f]">
+                                                                            <span className="text-xs text-gray-400 font-mono flex-1 truncate">{item.pair}</span>
+                                                                            <button onClick={() => navigator.clipboard.writeText(item.pair)} className="p-1 hover:bg-[#20222f] rounded">
+                                                                                <Copy className="w-3 h-3 text-gray-500 hover:text-gray-300" />
+                                                                            </button>
+                                                                            <a href={`https://${selectedChain === 'eth' ? 'etherscan.io' : selectedChain === 'solana' ? 'solscan.io' : `${selectedChain}scan.com`}/address/${item.pair}`} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-[#20222f] rounded">
+                                                                                <ExternalLink className="w-3 h-3 text-gray-500 hover:text-gray-300" />
+                                                                            </a>
+                                                                        </div>
+                                                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                                                            <div className="flex flex-col gap-1">
+                                                                                <span className="text-gray-400">Price</span>
+                                                                                <span className="text-orange-300 font-medium">{formatPrice(item.last_price)}</span>
+                                                                            </div>
+                                                                            <div className="flex flex-col gap-1">
+                                                                                <span className="text-gray-400">Market Cap</span>
+                                                                                <span className="text-sky-400 font-medium">{formatMarketCap(item.mcap)}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        {(tokenMetadata[`${selectedChain}-${item.base_token_id}`]?.websites?.length || tokenMetadata[`${selectedChain}-${item.base_token_id}`]?.socials?.length) && (
+                                                                            <div className="flex items-center gap-2 pt-2 border-t border-[#20222f]">
+                                                                                {tokenMetadata[`${selectedChain}-${item.base_token_id}`]?.websites?.[0] && (
+                                                                                    <a href={tokenMetadata[`${selectedChain}-${item.base_token_id}`].websites[0].url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#141723] rounded hover:bg-[#20222f] transition-colors">
+                                                                                        <Globe className="w-4 h-4 text-gray-400 hover:text-blue-400" />
+                                                                                    </a>
+                                                                                )}
+                                                                                {tokenMetadata[`${selectedChain}-${item.base_token_id}`]?.socials?.map((social, i) => (
+                                                                                    <a key={i} href={social.url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-[#141723] rounded hover:bg-[#20222f] transition-colors text-gray-400 hover:text-sky-400">
+                                                                                        <SocialIcon platform={social.platform || social.type || ''} size={16} />
+                                                                                    </a>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </PopoverContent>
+                                                            </Popover>
                                                         </div>
                                                     </div>
 
                                                     {/* Main Content */}
                                                     <div className="flex-1 flex items-center justify-end min-w-0 gap-0 pr-3 py-2.5 bg-[#171a26] border-y border-r border-[#20222f] rounded-r group-hover:bg-[#1c1e2b] group-hover:border-[#272936] transition-colors duration-150">
-                                                        {/* Pair Address */}
-                                                        <div className="w-[140px] relative flex items-center justify-center">
-                                                            <span className="text-xs text-gray-400 font-mono text-center w-full">
-                                                                {item.pair.slice(0, 4)}...{item.pair.slice(-4)}
-                                                            </span>
-                                                            <div className="absolute right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[#1c1e2b] pl-1">
-                                                                <button
-                                                                    onClick={() => navigator.clipboard.writeText(item.pair)}
-                                                                    className="p-0.5 hover:bg-[#20222f] rounded"
-                                                                >
-                                                                    <Copy className="w-3 h-3 text-gray-500 hover:text-gray-300" />
-                                                                </button>
-                                                                <a
-                                                                    href={`https://${selectedChain === 'eth' ? 'etherscan.io' : selectedChain === 'solana' ? 'solscan.io' : `${selectedChain}scan.com`}/address/${item.pair}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="p-0.5 hover:bg-[#20222f] rounded"
-                                                                >
-                                                                    <ExternalLink className="w-3 h-3 text-gray-500 hover:text-gray-300" />
-                                                                </a>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Token ID */}
-                                                        <div className="w-[100px] relative flex items-center justify-center">
-                                                            <span className="text-xs text-gray-400 font-mono text-center w-full">
-                                                                {item.base_token_id.slice(0, 4)}...{item.base_token_id.slice(-4)}
-                                                            </span>
-                                                            <div className="absolute right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-[#1c1e2b] pl-1">
-                                                                <button
-                                                                    onClick={() => navigator.clipboard.writeText(item.base_token_id)}
-                                                                    className="p-0.5 hover:bg-[#20222f] rounded"
-                                                                >
-                                                                    <Copy className="w-3 h-3 text-gray-500 hover:text-gray-300" />
-                                                                </button>
-                                                                <a
-                                                                    href={`https://${selectedChain === 'eth' ? 'etherscan.io' : selectedChain === 'solana' ? 'solscan.io' : `${selectedChain}scan.com`}/address/${item.base_token_id}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="p-0.5 hover:bg-[#20222f] rounded"
-                                                                >
-                                                                    <ExternalLink className="w-3 h-3 text-gray-500 hover:text-gray-300" />
-                                                                </a>
-                                                            </div>
-                                                        </div>
-
                                                         {/* Virality Score */}
                                                         <div className="w-[80px] flex justify-center">
-                                                            <span className="text-xs text-purple-400 font-medium tabular-nums">{item.virality_score.toFixed(1)}</span>
+                                                            <span className="text-xs text-purple-400 font-medium tabular-nums">{(item.virality_score ?? 0).toFixed(1)}</span>
                                                         </div>
 
                                                         {/* Volume */}
@@ -543,57 +627,52 @@ export function HypeTrackerBoard() {
 
                                                         {/* Holders */}
                                                         <div className="w-[70px] flex justify-center">
-                                                            <span className="text-xs text-gray-100 font-medium tabular-nums">{item.holder_count.toLocaleString()}</span>
+                                                            <span className="text-xs text-gray-100 font-medium tabular-nums">{formatNumber(item.holder_count)}</span>
                                                         </div>
 
                                                         {/* Price */}
-                                                        <div className="w-[80px] flex justify-center">
+                                                        <div className="w-[90px] flex justify-center">
                                                             <span className="text-xs text-orange-300 tabular-nums">{formatPrice(item.last_price)}</span>
                                                         </div>
 
                                                         {/* 6h Increase */}
                                                         <div className="w-[90px] flex flex-col items-center justify-center">
-                                                            <span className={`text-xs font-medium tabular-nums ${item["6_hour_increase"] > 0 ? "text-emerald-400" : item["6_hour_increase"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
-                                                                {item["6_hour_increase"] > 0 ? "+" : ""}{item["6_hour_increase"]}
+                                                            <span className={`text-xs font-medium tabular-nums ${(item["6_hour_increase"] ?? 0) > 0 ? "text-emerald-400" : (item["6_hour_increase"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                                {(item["6_hour_increase"] ?? 0) > 0 ? "+" : ""}{formatNumber(item["6_hour_increase"])}
                                                             </span>
-                                                            <span className={`text-[10px] tabular-nums ${item["6_hour_increase_percent"] > 0 ? "text-emerald-400" : item["6_hour_increase_percent"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                            <span className={`text-[10px] tabular-nums ${(item["6_hour_increase_percent"] ?? 0) > 0 ? "text-emerald-400" : (item["6_hour_increase_percent"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
                                                                 {formatPercent(item["6_hour_increase_percent"])}
                                                             </span>
                                                         </div>
 
                                                         {/* 24h Increase */}
                                                         <div className="w-[90px] flex flex-col items-center justify-center">
-                                                            <span className={`text-xs font-medium tabular-nums ${item["24_hour_increase"] > 0 ? "text-emerald-400" : item["24_hour_increase"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
-                                                                {item["24_hour_increase"] > 0 ? "+" : ""}{item["24_hour_increase"]}
+                                                            <span className={`text-xs font-medium tabular-nums ${(item["24_hour_increase"] ?? 0) > 0 ? "text-emerald-400" : (item["24_hour_increase"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                                {(item["24_hour_increase"] ?? 0) > 0 ? "+" : ""}{formatNumber(item["24_hour_increase"])}
                                                             </span>
-                                                            <span className={`text-[10px] tabular-nums ${item["24_hour_increase_percent"] > 0 ? "text-emerald-400" : item["24_hour_increase_percent"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                            <span className={`text-[10px] tabular-nums ${(item["24_hour_increase_percent"] ?? 0) > 0 ? "text-emerald-400" : (item["24_hour_increase_percent"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
                                                                 {formatPercent(item["24_hour_increase_percent"])}
                                                             </span>
                                                         </div>
 
                                                         {/* 72h Increase */}
                                                         <div className="w-[90px] flex flex-col items-center justify-center">
-                                                            <span className={`text-xs font-medium tabular-nums ${item["72_hour_increase"] > 0 ? "text-emerald-400" : item["72_hour_increase"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
-                                                                {item["72_hour_increase"] > 0 ? "+" : ""}{item["72_hour_increase"]}
+                                                            <span className={`text-xs font-medium tabular-nums ${(item["72_hour_increase"] ?? 0) > 0 ? "text-emerald-400" : (item["72_hour_increase"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                                {(item["72_hour_increase"] ?? 0) > 0 ? "+" : ""}{formatNumber(item["72_hour_increase"])}
                                                             </span>
-                                                            <span className={`text-[10px] tabular-nums ${item["72_hour_increase_percent"] > 0 ? "text-emerald-400" : item["72_hour_increase_percent"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                            <span className={`text-[10px] tabular-nums ${(item["72_hour_increase_percent"] ?? 0) > 0 ? "text-emerald-400" : (item["72_hour_increase_percent"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
                                                                 {formatPercent(item["72_hour_increase_percent"])}
                                                             </span>
                                                         </div>
 
                                                         {/* 7d Increase */}
                                                         <div className="w-[90px] flex flex-col items-center justify-center">
-                                                            <span className={`text-xs font-medium tabular-nums ${item["7_days_increase"] > 0 ? "text-emerald-400" : item["7_days_increase"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
-                                                                {item["7_days_increase"] > 0 ? "+" : ""}{item["7_days_increase"]}
+                                                            <span className={`text-xs font-medium tabular-nums ${(item["7_days_increase"] ?? 0) > 0 ? "text-emerald-400" : (item["7_days_increase"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                                {(item["7_days_increase"] ?? 0) > 0 ? "+" : ""}{formatNumber(item["7_days_increase"])}
                                                             </span>
-                                                            <span className={`text-[10px] tabular-nums ${item["7_days_increase_percent"] > 0 ? "text-emerald-400" : item["7_days_increase_percent"] < 0 ? "text-rose-400" : "text-gray-500"}`}>
+                                                            <span className={`text-[10px] tabular-nums ${(item["7_days_increase_percent"] ?? 0) > 0 ? "text-emerald-400" : (item["7_days_increase_percent"] ?? 0) < 0 ? "text-rose-400" : "text-gray-500"}`}>
                                                                 {formatPercent(item["7_days_increase_percent"])}
                                                             </span>
-                                                        </div>
-
-                                                        {/* Created */}
-                                                        <div className="w-[100px] flex justify-center">
-                                                            <span className="text-xs text-gray-400 tabular-nums">{formatDate(item.pair_created_timestamp)}</span>
                                                         </div>
                                                     </div>
                                                 </div>

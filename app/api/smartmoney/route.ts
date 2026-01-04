@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+// In-memory cache for last successful responses (fallback when API fails)
+const lastSuccessfulCache = new Map<string, { data: any; timestamp: number }>();
 
 const ENDPOINTS: Record<string, { url: string; defaultBody: any; revalidate: number }> = {
     'netflow': {
@@ -82,6 +84,10 @@ export async function POST(request: Request) {
         per_page: 1000
     };
 
+    // Create cache key based on type and request body
+    const cacheKey = `${type}-${JSON.stringify(body)}`;
+
+    // Try to fetch fresh data
     try {
         const response = await fetch(config.url, {
             method: "POST",
@@ -95,6 +101,18 @@ export async function POST(request: Request) {
         });
 
         if (!response.ok) {
+            // API error - try to serve stale data if available
+            const cached = lastSuccessfulCache.get(cacheKey);
+            if (cached) {
+                console.error(`Upstream API Error [${type}]:`, response.status, response.statusText);
+                console.log(`Serving stale cached data for [${type}] due to API error`);
+                return NextResponse.json(cached.data, {
+                    headers: {
+                        'Cache-Control': `public, max-age=${config.revalidate}, s-maxage=${config.revalidate}, stale-while-revalidate=86400`,
+                    },
+                });
+            }
+            
             console.error(`Upstream API Error [${type}]:`, response.status, response.statusText);
             return NextResponse.json(
                 { error: `External API error: ${response.statusText}` },
@@ -102,10 +120,31 @@ export async function POST(request: Request) {
             );
         }
 
+        // Success - parse and cache the data
         const data = await response.json();
-        return NextResponse.json(data);
+        
+        // Store successful response in memory cache
+        lastSuccessfulCache.set(cacheKey, { data, timestamp: Date.now() });
+        
+        return NextResponse.json(data, {
+            headers: {
+                'Cache-Control': `public, max-age=${config.revalidate}, s-maxage=${config.revalidate}, stale-while-revalidate=86400`,
+            },
+        });
     } catch (error: any) {
+        // Network error - try to serve stale data if available
         console.error("API Route Error:", error);
+        const cached = lastSuccessfulCache.get(cacheKey);
+        if (cached) {
+            console.log(`Network error, serving stale cached data for [${type}]`);
+            return NextResponse.json(cached.data, {
+                headers: {
+                    'Cache-Control': `public, max-age=${config.revalidate}, s-maxage=${config.revalidate}, stale-while-revalidate=86400`,
+                },
+            });
+        }
+        
+        // No cached data available, return error
         return NextResponse.json(
             { error: error?.message || "Internal Server Error" },
             { status: 500 }
